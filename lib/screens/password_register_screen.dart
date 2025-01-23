@@ -16,6 +16,8 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isPasswordVisible = false; // Control de visibilidad de contraseña
+  bool _isLoading = false; // Indicador de carga
 
   // Validar contraseñas
   String? _validatePassword(String? value) {
@@ -25,6 +27,8 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
       return 'La contraseña debe tener entre 8 y 16 caracteres';
     } else if (!RegExp(r'(?=.*[A-Z])').hasMatch(value)) {
       return 'Debe contener al menos una mayúscula';
+    } else if (!RegExp(r'(?=.*[a-z])').hasMatch(value)) {
+      return 'Debe contener al menos una minúscula';
     } else if (!RegExp(r'(?=.*[!@#$%^&*(),.?":{}|<>])').hasMatch(value)) {
       return 'Debe contener al menos un carácter especial';
     }
@@ -41,12 +45,23 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
     );
   }
 
-  void _nextStep() {
+  Future<void> _nextStep() async {
     if (_formKey.currentState!.validate()) {
       if (_passwordController.text != _confirmPasswordController.text) {
         _showToast('Las contraseñas no coinciden');
         return;
       }
+
+      setState(() {
+        _isLoading = true;
+      });
+
+      await Future.delayed(Duration(seconds: 2)); // Simulación de carga
+
+      setState(() {
+        _isLoading = false;
+      });
+
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -67,62 +82,116 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Crear cuenta',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              Text('Ingresa tu contraseña',
-                  style: TextStyle(fontSize: 18, color: Colors.red)),
-              SizedBox(height: 20),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.lock, color: Colors.red),
-                  hintText: 'Contraseña',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                validator: _validatePassword,
-              ),
-              SizedBox(height: 20),
-              TextFormField(
-                controller: _confirmPasswordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.lock, color: Colors.red),
-                  hintText: 'Confirmar contraseña',
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor confirma tu contraseña';
-                  }
-                  return null;
-                },
-              ),
-              Spacer(),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: ElevatedButton(
-                  onPressed: _nextStep,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    shape: CircleBorder(),
-                    padding: EdgeInsets.all(16),
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Crear cuenta',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: const Color.fromARGB(255, 54, 54, 54),
+                    ),
                   ),
-                  child: Icon(Icons.arrow_forward, color: Colors.white),
+                  Text(
+                    'Ingresa tu contraseña',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: !_isPasswordVisible,
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.lock, color: Colors.green),
+                      hintText: 'Contraseña',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Colors.green,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                      ),
+                    ),
+                    validator: _validatePassword,
+                  ),
+                  SizedBox(height: 20),
+                  TextFormField(
+                    controller: _confirmPasswordController,
+                    obscureText: !_isPasswordVisible,
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.lock, color: Colors.green),
+                      hintText: 'Confirmar contraseña',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Colors.green,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Por favor, confirma tu contraseña';
+                      }
+                      return null;
+                    },
+                  ),
+                  Spacer(),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: ElevatedButton(
+                      onPressed: _nextStep,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        shape: CircleBorder(),
+                        padding: EdgeInsets.all(16),
+                      ),
+                      child: Icon(Icons.arrow_forward, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_isLoading)
+            Container(
+              color: Colors.black54, // Fondo semitransparente
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                  strokeWidth: 6,
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }
