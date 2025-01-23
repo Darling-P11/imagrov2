@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.imagro"
-        minSdk = flutter.minSdkVersion
+        minSdk = 23 // Cambia de flutter.minSdkVersion a 23 para evitar errores
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

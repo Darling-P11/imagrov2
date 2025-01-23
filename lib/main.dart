@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:imagro/screens/splash_screen.dart';
-import 'screens/splash_screen.dart';
+import 'package:imagro/screens/home_screen.dart';
+import 'package:imagro/screens/login_screen.dart';
+import 'package:imagro/screens/success_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Asegúrate de inicializar los widgets
+  await Firebase.initializeApp(); // Inicializa Firebase
   runApp(MyApp());
 }
 
@@ -13,7 +18,13 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Imagro',
       theme: ThemeData(primarySwatch: Colors.green),
-      home: SplashScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => SplashScreen(),
+        '/home': (context) => HomeScreen(),
+        '/emailInput': (context) => LoginScreen(),
+        '/success': (context) => SuccessScreen(),
+      },
     );
   }
 }

@@ -35,10 +35,11 @@ class HomeScreen extends StatelessWidget {
             SizedBox(height: 30),
             ElevatedButton.icon(
               onPressed: () {
-                // Acción para continuar con email
+                Navigator.pushNamed(context,
+                    '/emailInput'); // Redirige a la pantalla de ingreso de correo
               },
               icon: Icon(Icons.email, color: Colors.white),
-              label: Text('Continuar con E-mail'),
+              label: Text('Iniciar Sesón'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black, // Color de fondo
                 foregroundColor: Colors.white, // Color del texto e íconos
@@ -59,7 +60,7 @@ class HomeScreen extends StatelessWidget {
                 width: 20,
                 height: 20,
               ),
-              label: Text('Continuar con Google'),
+              label: Text('Registrate'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white, // Fondo blanco
                 foregroundColor: Colors.black, // Texto e íconos negros
