@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:imagro/screens/menu_screen.dart';
+import 'package:imagro/screens/profile_register_screen.dart';
 import 'package:imagro/screens/splash_screen.dart';
 import 'package:imagro/screens/home_screen.dart';
-import 'package:imagro/screens/login_screen.dart';
-import 'package:imagro/screens/success_screen.dart';
+import 'package:imagro/screens/enter_email_screen.dart';
+import 'package:imagro/screens/password_login_screen.dart';
+import 'package:imagro/screens/password_register_screen.dart'; // Registro incluido
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Asegúrate de inicializar los widgets
+  WidgetsFlutterBinding
+      .ensureInitialized(); // Inicializa widgets antes de Firebase
   await Firebase.initializeApp(); // Inicializa Firebase
   runApp(MyApp());
 }
@@ -18,12 +22,19 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Imagro',
       theme: ThemeData(primarySwatch: Colors.green),
+      // Ruta inicial
       initialRoute: '/',
       routes: {
-        '/': (context) => SplashScreen(),
-        '/home': (context) => HomeScreen(),
-        '/emailInput': (context) => LoginScreen(),
-        '/success': (context) => SuccessScreen(),
+        '/': (context) => SplashScreen(), // Pantalla de carga
+        '/home': (context) => HomeScreen(), // Pantalla principal
+        '/email': (context) =>
+            EnterEmailScreen(), // Pantalla para ingresar correo
+        '/password-login': (context) =>
+            PasswordLoginScreen(email: ''), // Pantalla para ingresar contraseña
+        '/register-password': (context) => PasswordRegisterScreen(email: ''),
+        '/register-profile': (context) =>
+            ProfileRegisterScreen(email: '', password: ''),
+        '/menu': (context) => MenuScreen(),
       },
     );
   }

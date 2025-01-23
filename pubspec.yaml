@@ -39,6 +39,7 @@ dependencies:
   cached_network_image: ^3.4.1
   image_picker: ^1.1.2
   provider: ^6.0.0
+  fluttertoast: ^8.2.1
 
   
 
