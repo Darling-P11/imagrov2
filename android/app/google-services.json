@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "958505003291",
+    "project_id": "imagro-b9269",
+    "storage_bucket": "imagro-b9269.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:958505003291:android:b4f920228bf46eba1ccbbe",
+        "android_client_info": {
+          "package_name": "com.example.imagro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8q5EZ3EUNflMF2OdpPlMFWXhuguF0cBo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
