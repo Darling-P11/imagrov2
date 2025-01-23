@@ -20,6 +20,8 @@ class _PasswordLoginScreenState extends State<PasswordLoginScreen> {
   String _errorMessage = '';
   String? userName;
   String? userProfileImage;
+  bool _canRequestPasswordReset =
+      true; // Control para evitar múltiples solicitudes
 
   @override
   void initState() {
@@ -52,12 +54,12 @@ class _PasswordLoginScreenState extends State<PasswordLoginScreen> {
     }
   }
 
-  void _showToast(String message) {
+  void _showToast(String message, {Color backgroundColor = Colors.red}) {
     Fluttertoast.showToast(
       msg: message,
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.BOTTOM,
-      backgroundColor: Colors.red,
+      backgroundColor: backgroundColor,
       textColor: Colors.white,
     );
   }
@@ -83,13 +85,61 @@ class _PasswordLoginScreenState extends State<PasswordLoginScreen> {
     }
   }
 
-  void _forgotPassword() {
-    Fluttertoast.showToast(
-      msg: 'Función "Olvidaste tu contraseña" aún no implementada',
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: Colors.orange,
-      textColor: Colors.white,
+  Future<void> _forgotPassword() async {
+    if (!_canRequestPasswordReset) {
+      _showToast('Por favor espera antes de enviar otra solicitud.');
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Recuperar contraseña'),
+          content: Text(
+              '¿Quieres enviar la solicitud para recuperar la contraseña?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showToast('Solicitud cancelada',
+                    backgroundColor: Colors.orange);
+              },
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                setState(() {
+                  _isLoading = true;
+                });
+
+                try {
+                  await FirebaseAuth.instance
+                      .sendPasswordResetEmail(email: widget.email);
+                  _showToast('Solicitud enviada',
+                      backgroundColor: Colors.green);
+                  _canRequestPasswordReset = false;
+
+                  // Rehabilitar el envío de la solicitud después de 60 segundos
+                  Future.delayed(Duration(seconds: 60), () {
+                    setState(() {
+                      _canRequestPasswordReset = true;
+                    });
+                  });
+                } catch (e) {
+                  _showToast('Error al enviar la solicitud');
+                } finally {
+                  setState(() {
+                    _isLoading = false;
+                  });
+                }
+              },
+              child: Text('Confirmar'),
+            ),
+          ],
+        );
+      },
     );
   }
 
