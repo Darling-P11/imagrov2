@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PasswordLoginScreen extends StatefulWidget {
   final String email;
@@ -13,80 +15,223 @@ class PasswordLoginScreen extends StatefulWidget {
 class _PasswordLoginScreenState extends State<PasswordLoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isPasswordVisible = false;
+  bool _isLoading = false;
   String _errorMessage = '';
+  String? userName;
+  String? userProfileImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserDetails();
+  }
+
+  Future<void> _fetchUserDetails() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      var userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: widget.email)
+          .get();
+      if (userDoc.docs.isNotEmpty) {
+        var userData = userDoc.docs.first.data();
+        setState(() {
+          userName = userData['name'];
+          userProfileImage = userData['profileImage'];
+        });
+      }
+    } catch (e) {
+      _showToast('Error al cargar los datos del usuario');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+    );
+  }
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
       try {
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: widget.email,
           password: _passwordController.text.trim(),
         );
-        // Redirigir a la pantalla principal o donde corresponda
-        Navigator.pushReplacementNamed(context, '/main');
-      } catch (e) {
+        Navigator.pushReplacementNamed(context, '/menu');
+      } on FirebaseAuthException catch (e) {
+        _showToast('Error al iniciar sesión: ${e.message}');
+      } finally {
         setState(() {
-          _errorMessage = 'Error al iniciar sesión: ${e.toString()}';
+          _isLoading = false;
         });
       }
     }
   }
 
+  void _forgotPassword() {
+    Fluttertoast.showToast(
+      msg: 'Función "Olvidaste tu contraseña" aún no implementada',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.orange,
+      textColor: Colors.white,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: BackButton(color: Colors.black),
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Iniciar sesión', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              Text('Ingresa tu contraseña', style: TextStyle(fontSize: 18, color: Colors.red)),
-              SizedBox(height: 20),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.lock, color: Colors.red),
-                  hintText: 'Contraseña',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      body: Stack(
+        children: [
+          if (!_isLoading)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Iniciar sesión',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(
+                        height: 3), // Separación entre el título y subtítulo
+                    Text(
+                      'Ingresa tu contraseña',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                    SizedBox(height: 80), // Separación entre subtítulo e imagen
+                    Center(
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 65,
+                            backgroundColor: Colors.grey[200],
+                            backgroundImage: userProfileImage != null
+                                ? NetworkImage(userProfileImage!)
+                                : null,
+                            child: userProfileImage == null
+                                ? Icon(
+                                    Icons.person,
+                                    size: 50,
+                                    color: const Color.fromARGB(
+                                        255, 119, 119, 119),
+                                  )
+                                : null,
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            userName ?? 'Cargando...',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: !_isPasswordVisible,
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.lock, color: Colors.green),
+                        hintText: 'Contraseña',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isPasswordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: Colors.green,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor ingresa una contraseña';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: GestureDetector(
+                        onTap: _forgotPassword,
+                        child: Text(
+                          '¿Olvidaste tu contraseña?',
+                          style: TextStyle(
+                            color: const Color.fromARGB(255, 83, 83, 83),
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Spacer(),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: ElevatedButton(
+                        onPressed: _login,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          shape: CircleBorder(),
+                          padding: EdgeInsets.all(16),
+                        ),
+                        child: Icon(Icons.arrow_forward, color: Colors.white),
+                      ),
+                    ),
+                  ],
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingresa una contraseña';
-                  }
-                  return null;
-                },
               ),
-              SizedBox(height: 10),
-              if (_errorMessage.isNotEmpty)
-                Text(
-                  _errorMessage,
-                  style: TextStyle(color: Colors.red),
-                ),
-              Spacer(),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: ElevatedButton(
-                  onPressed: _login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    shape: CircleBorder(),
-                    padding: EdgeInsets.all(16),
-                  ),
-                  child: Icon(Icons.arrow_forward, color: Colors.white),
+            ),
+          if (_isLoading)
+            Container(
+              color: Colors.white.withOpacity(0.8),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: Colors.green,
+                  strokeWidth: 6.0,
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }
