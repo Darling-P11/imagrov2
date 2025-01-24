@@ -68,6 +68,10 @@ flutter:
     - assets/images/logo.png
     - assets/images/logo_verde.png
     - assets/icons/google_icon.png
+    - assets/icons/perfil.png
+    - assets/icons/usuarios.png
+    - assets/icons/datasets.png
+    - assets/icons/contribuciones.png
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
