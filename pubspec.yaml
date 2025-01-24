@@ -72,6 +72,10 @@ flutter:
     - assets/icons/usuarios.png
     - assets/icons/datasets.png
     - assets/icons/contribuciones.png
+    - assets/icons/contribuir.png
+    - assets/icons/fotografias.png
+    - assets/icons/solicitudes.png
+    - assets/icons/estadisticas.png
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
