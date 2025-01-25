@@ -41,6 +41,7 @@ dependencies:
   provider: ^6.0.0
   fluttertoast: ^8.2.1
   google_sign_in: ^5.4.0
+  flutter_launcher_icons: ^0.13.1
 
   
 
@@ -64,6 +65,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  uses-material-design: true
   assets:
     - assets/images/logo.png
     - assets/images/logo_verde.png
@@ -76,6 +78,12 @@ flutter:
     - assets/icons/fotografias.png
     - assets/icons/solicitudes.png
     - assets/icons/estadisticas.png
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/logo_app.png"
+
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
