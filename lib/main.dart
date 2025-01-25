@@ -7,11 +7,14 @@ import 'package:imagro/screens/home_screen.dart';
 import 'package:imagro/screens/enter_email_screen.dart';
 import 'package:imagro/screens/password_login_screen.dart';
 import 'package:imagro/screens/password_register_screen.dart'; // Registro incluido
+import 'package:intl/date_symbol_data_local.dart'; // Para inicializar locales
 
 void main() async {
   WidgetsFlutterBinding
       .ensureInitialized(); // Inicializa widgets antes de Firebase
   await Firebase.initializeApp(); // Inicializa Firebase
+  await initializeDateFormatting(
+      'es_ES', null); // Inicializa el idioma español para fechas
   runApp(MyApp());
 }
 
