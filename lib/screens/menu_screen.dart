@@ -12,17 +12,24 @@ class MenuScreen extends StatefulWidget {
 
 class _MenuScreenState extends State<MenuScreen> {
   String? userImage;
+  String? userName; // Nuevo: Para almacenar el nombre del usuario
+  User? currentUser;
 
   @override
   void initState() {
     super.initState();
-    _fetchUserImage();
+    _fetchUserData();
   }
 
-  Future<void> _fetchUserImage() async {
+  Future<void> _fetchUserData() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
+
       if (user != null) {
+        setState(() {
+          currentUser = user;
+        });
+
         final userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
@@ -31,11 +38,12 @@ class _MenuScreenState extends State<MenuScreen> {
         if (userDoc.exists) {
           setState(() {
             userImage = userDoc.data()?['profileImage'] ?? null;
+            userName = userDoc.data()?['name'] ?? user.displayName; // Aquí
           });
         }
       }
     } catch (e) {
-      print('Error fetching user image: $e');
+      print('Error al obtener los datos del usuario: $e');
     }
   }
 
@@ -46,7 +54,11 @@ class _MenuScreenState extends State<MenuScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            HeaderWidget(userImage: userImage), // Pasar la imagen al encabezado
+            HeaderWidget(
+              user: currentUser,
+              userImage: userImage,
+              userName: userName,
+            ),
             SizedBox(height: 15),
             FunctionalitiesWidget(),
           ],

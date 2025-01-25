@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:imagro/widgets/submenu_encabezado.dart';
 
 class HeaderWidget extends StatelessWidget {
+  final User? user;
   final String? userImage;
+  final String? userName; // Nuevo: Nombre del usuario
 
-  HeaderWidget({this.userImage});
+  HeaderWidget({this.user, this.userImage, this.userName});
 
   @override
   Widget build(BuildContext context) {
@@ -77,13 +80,10 @@ class HeaderWidget extends StatelessWidget {
                         ),
                       ],
                     ),
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.white,
-                      backgroundImage: userImage != null
-                          ? NetworkImage(userImage!)
-                          : AssetImage('assets/icons/perfil.png')
-                              as ImageProvider,
+                    ProfileDropdownMenu(
+                      user: user,
+                      userImage: userImage,
+                      userName: userName, // Pasar el nombre al menú desplegable
                     ),
                   ],
                 ),
@@ -114,8 +114,9 @@ class HeaderWidget extends StatelessWidget {
                     ),
                     OutlinedButton(
                       onPressed: () {
-                        // Redirige a la web
-                        _openWebsite(context);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('Redirigiendo al sitio web...'),
+                        ));
                       },
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: Colors.white),
@@ -226,9 +227,5 @@ class HeaderWidget extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void _openWebsite(BuildContext context) {
-    // Aquí rediriges a la web con una librería como url_launcher
   }
 }

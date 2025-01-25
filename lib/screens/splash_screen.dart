@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart';
+import 'menu_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -11,13 +13,29 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Simular el tiempo de carga de la app (3 segundos)
-    Timer(Duration(seconds: 3), () {
+    _checkUserSession();
+  }
+
+  Future<void> _checkUserSession() async {
+    // Simular tiempo de carga
+    await Future.delayed(Duration(seconds: 3));
+
+    // Verificar si hay un usuario autenticado
+    User? currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser != null) {
+      // Usuario autenticado, redirigir al menú
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => MenuScreen()),
+      );
+    } else {
+      // Usuario no autenticado, redirigir al inicio
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => HomeScreen()),
       );
-    });
+    }
   }
 
   @override
