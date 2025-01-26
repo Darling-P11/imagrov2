@@ -80,6 +80,7 @@ flutter:
     - assets/icons/fotografias.png
     - assets/icons/solicitudes.png
     - assets/icons/estadisticas.png
+    - assets/images/logo_banner.png
 
 flutter_icons:
   android: true

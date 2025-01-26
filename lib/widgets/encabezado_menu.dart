@@ -172,11 +172,11 @@ class HeaderWidget extends StatelessWidget {
   String _getGreeting(DateTime now) {
     final hour = now.hour;
     if (hour >= 0 && hour < 12) {
-      return 'Buenos Días';
+      return 'Buenos días';
     } else if (hour >= 12 && hour < 18) {
-      return 'Buenas Tardes';
+      return 'Buenas tardes';
     } else {
-      return 'Buenas Noches';
+      return 'Buenas noches';
     }
   }
 
