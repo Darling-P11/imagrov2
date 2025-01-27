@@ -9,6 +9,7 @@ import 'package:imagro/screens/password_login_screen.dart';
 import 'package:imagro/screens/password_register_screen.dart'; // Registro incluido
 import 'package:intl/date_symbol_data_local.dart'; // Para inicializar locales
 import 'package:imagro/screens/profile_screen.dart'; // Importa la pantalla de perfil
+import 'package:imagro/screens/contribuir_confg.dart';
 
 void main() async {
   WidgetsFlutterBinding
@@ -40,6 +41,8 @@ class MyApp extends StatelessWidget {
             ProfileRegisterScreen(email: '', password: ''),
         '/menu': (context) => MenuScreen(),
         '/profile': (context) => ProfileScreen(),
+        '/configuracion-contribucion': (context) =>
+            ConfiguracionContribucionScreen(),
       },
     );
   }

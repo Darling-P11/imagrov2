@@ -15,7 +15,9 @@ class FunctionalitiesWidget extends StatelessWidget {
           _buildModuleCard(
             image: 'assets/icons/contribuir.png',
             title: 'Comenzar a contribuir',
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, '/configuracion-contribucion');
+            },
           ),
           _buildModuleCard(
             image: 'assets/icons/fotografias.png',
