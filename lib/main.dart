@@ -10,13 +10,16 @@ import 'package:imagro/screens/password_register_screen.dart'; // Registro inclu
 import 'package:intl/date_symbol_data_local.dart'; // Para inicializar locales
 import 'package:imagro/screens/profile_screen.dart'; // Importa la pantalla de perfil
 import 'package:imagro/screens/contribuir_confg.dart';
+import 'package:imagro/screens/carga_contribuir.dart'; // Importa la pantalla de carga de contribuciones
 
 void main() async {
   WidgetsFlutterBinding
-      .ensureInitialized(); // Inicializa widgets antes de Firebase
+      .ensureInitialized();
+      // Inicializa widgets antes de Firebase
   await Firebase.initializeApp(); // Inicializa Firebase
   await initializeDateFormatting(
       'es_ES', null); // Inicializa el idioma español para fechas
+      
   runApp(MyApp());
 }
 
@@ -43,6 +46,9 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => ProfileScreen(),
         '/configuracion-contribucion': (context) =>
             ConfiguracionContribucionScreen(),
+        '/carga-contribucion': (context) => CargaContribuirScreen(
+              estructuraEtiquetas: {}, // Debe ser actualizado al navegar
+            ),
       },
     );
   }
