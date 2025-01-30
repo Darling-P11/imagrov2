@@ -590,24 +590,11 @@ class _ConfiguracionContribucionScreenState
     );
   }
 
-  Widget _buildSeleccionEnfermedades(String cultivoActual, String tipoActual) {
-    List<String> enfermedadesDisponibles =
-        enfermedadesPorCultivo[cultivoActual] ?? [];
-
-    // 🔹 Inicializar la estructura si no existe
-    _configuracionFinal.putIfAbsent(cultivoActual, () => {});
-    _configuracionFinal[cultivoActual]!.putIfAbsent(tipoActual, () => {});
-    _configuracionFinal[cultivoActual]![tipoActual]!
-        .putIfAbsent('enfermedades', () => <String>[]);
-
-    // ✅ Acceder a la lista garantizando que no sea nula
-    final List<String> enfermedades = List<String>.from(
-        _configuracionFinal[cultivoActual]![tipoActual]!['enfermedades'] ?? []);
-
+  Widget _buildSeleccionEnfermedades(
+      String cultivoActual, List<String> tiposEnfermos) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ✅ Encabezado de selección
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 10.0),
           child: Row(
@@ -629,7 +616,7 @@ class _ConfiguracionContribucionScreenState
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.grey[600], // Color fijo para el cultivo actual
+                  color: Colors.grey[600],
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -643,11 +630,8 @@ class _ConfiguracionContribucionScreenState
             ],
           ),
         ),
-
         Divider(thickness: 1, color: Colors.grey[400]),
         SizedBox(height: 5),
-
-        // ✅ Título "Enfermedades"
         Align(
           alignment: Alignment.center,
           child: Container(
@@ -666,84 +650,91 @@ class _ConfiguracionContribucionScreenState
             ),
           ),
         ),
-
         SizedBox(height: 5),
+        Expanded(
+          child: ListView(
+            children: tiposEnfermos.map((tipo) {
+              _configuracionFinal.putIfAbsent(cultivoActual, () => {});
+              _configuracionFinal[cultivoActual]!.putIfAbsent(tipo, () => {});
+              _configuracionFinal[cultivoActual]![tipo]!
+                  .putIfAbsent('enfermedades', () => <String>[]);
 
-        // ✅ Contenedor con la selección de enfermedades
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            color: Colors.grey[500], // Color del encabezado
-          ),
-          child: Column(
-            children: [
-              // ✅ Encabezado con el nombre del tipo de cultivo
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.grey[500], // Color del encabezado
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(15),
-                    topRight: Radius.circular(15),
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    tipoActual,
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
-                ),
-              ),
+              final List<String> enfermedades =
+                  (_configuracionFinal[cultivoActual]?[tipo]?['enfermedades']
+                          as List<String>?) ??
+                      [];
 
-              // ✅ Contenedor con los botones de enfermedades
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200], // Fondo gris claro
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(15),
-                    bottomRight: Radius.circular(15),
+              return Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[500],
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(15),
+                        topRight: Radius.circular(15),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        tipo,
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                      ),
+                    ),
                   ),
-                ),
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: enfermedadesDisponibles.map((enfermedad) {
-                    final bool isSelected = enfermedades.contains(enfermedad);
-
-                    return ChoiceChip(
-                      label: Text(enfermedad),
-                      selected: isSelected,
-                      selectedColor: Colors.green[100],
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            enfermedades.add(enfermedad);
-                          } else {
-                            enfermedades.remove(enfermedad);
-                          }
-                          _configuracionFinal[cultivoActual]![tipoActual]![
-                              'enfermedades'] = enfermedades;
-                        });
-                      },
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(15),
+                        bottomRight: Radius.circular(15),
+                      ),
+                    ),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: (enfermedadesPorCultivo[cultivoActual] ?? [])
+                          .map((enfermedad) {
+                        final bool isSelected =
+                            enfermedades.contains(enfermedad);
+                        return ChoiceChip(
+                          label: Text(enfermedad),
+                          selected: isSelected,
+                          selectedColor: Colors.orange[100],
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _configuracionFinal[cultivoActual]![tipo]![
+                                    'enfermedades'] = [
+                                  ...enfermedades,
+                                  enfermedad
+                                ];
+                              } else {
+                                _configuracionFinal[cultivoActual]![tipo]![
+                                        'enfermedades'] =
+                                    enfermedades
+                                        .where((e) => e != enfermedad)
+                                        .toList();
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                ],
+              );
+            }).toList(),
           ),
         ),
-
-        SizedBox(height: 10),
-
-        // ✅ Botones de navegación
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
           child: Row(
@@ -783,26 +774,75 @@ class _ConfiguracionContribucionScreenState
               ),
               ElevatedButton.icon(
                 onPressed: () {
-                  if (enfermedades.isNotEmpty) {
-                    _avanzarAlSiguienteTipoOCultivo();
-                    setState(() {});
+                  // ✅ Obtener la lista de cultivos seleccionados
+                  String cultivoActual =
+                      _cultivosSeleccionados[_cultivoActualIndex];
+
+                  // ✅ Obtener los tipos con estado "Enfermo" dentro del cultivo actual
+                  List<String> tiposEnfermos =
+                      _tiposSeleccionadosPorCultivo[cultivoActual]!
+                          .where((tipo) =>
+                              _configuracionFinal[cultivoActual]?[tipo]
+                                  ?['estado'] ==
+                              'Enfermo')
+                          .toList();
+
+                  // ✅ Verificar si se puede avanzar (todas las variantes enfermas tienen enfermedades seleccionadas)
+                  if (_sePuedeAvanzar(cultivoActual, tiposEnfermos)) {
+                    if (_cultivoActualIndex <
+                        _cultivosSeleccionados.length - 1) {
+                      // ✅ Si hay más cultivos por procesar, avanzar al siguiente cultivo
+                      setState(() {
+                        _cultivoActualIndex++;
+                      });
+                    } else {
+                      // ✅ Si ya se procesaron todos los cultivos, avanzar al informe final
+                      setState(() {
+                        _currentStep++;
+                        _cultivoActualIndex = 0; // Reiniciar índice
+                      });
+                    }
                   }
                 },
                 icon: Icon(Icons.arrow_forward, color: Colors.white),
                 label: Text('Siguiente', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      enfermedades.isNotEmpty ? Color(0xFF0BA37F) : Colors.grey,
+                  backgroundColor: _sePuedeAvanzar(
+                          _cultivosSeleccionados[_cultivoActualIndex],
+                          _tiposSeleccionadosPorCultivo[
+                                  _cultivosSeleccionados[_cultivoActualIndex]]!
+                              .where((tipo) =>
+                                  _configuracionFinal[_cultivosSeleccionados[
+                                      _cultivoActualIndex]]?[tipo]?['estado'] ==
+                                  'Enfermo')
+                              .toList())
+                      ? Color(0xFF0BA37F) // Activo
+                      : Colors
+                          .grey, // Inactivo si falta seleccionar enfermedades
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-              ),
+              )
             ],
           ),
         ),
       ],
     );
+  }
+
+  /// 🔹 Función para verificar si se puede avanzar
+  bool _sePuedeAvanzar(String cultivoActual, List<String> tiposEnfermos) {
+    for (String tipo in tiposEnfermos) {
+      final List<String> enfermedadesSeleccionadas =
+          (_configuracionFinal[cultivoActual]?[tipo]?['enfermedades']
+                  as List<String>?) ??
+              [];
+      if (enfermedadesSeleccionadas.isEmpty) {
+        return false; // Si hay un tipo sin enfermedades, no se puede avanzar
+      }
+    }
+    return true;
   }
 
   void _avanzarAlSiguienteTipoOCultivo() {
@@ -824,35 +864,28 @@ class _ConfiguracionContribucionScreenState
   }
 
   Widget _procesarSeleccionEnfermedades() {
-    // Verificar si hay más cultivos que procesar
     if (_cultivoActualIndex < _cultivosSeleccionados.length) {
       String cultivoActual = _cultivosSeleccionados[_cultivoActualIndex];
       List<String> tiposCultivo =
           _tiposSeleccionadosPorCultivo[cultivoActual] ?? [];
 
-      // Verificar si hay más tipos de cultivo en este cultivo que procesar
-      if (_tipoActualIndex < tiposCultivo.length) {
-        String tipoActual = tiposCultivo[_tipoActualIndex];
-        String estadoActual =
-            _configuracionFinal[cultivoActual]?[tipoActual]?['estado'] ?? '';
+      // 🔹 Filtrar solo los tipos de cultivo con estado "Enfermo"
+      List<String> tiposEnfermos = tiposCultivo.where((tipo) {
+        String estado =
+            _configuracionFinal[cultivoActual]?[tipo]?['estado'] ?? '';
+        return estado == "Enfermo"; // "Mixto" ya no se incluye aquí
+      }).toList();
 
-        // Si el tipo de cultivo tiene "Con enfermedad", mostrar selección de enfermedades
-        if (estadoActual == "Enfermo") {
-          return _buildSeleccionEnfermedades(cultivoActual, tipoActual);
-        } else {
-          // Si el tipo no tiene "Con enfermedad", pasar al siguiente
-          _avanzarAlSiguienteTipoOCultivo();
-          return _procesarSeleccionEnfermedades(); // Llamar recursivamente hasta encontrar uno con enfermedad o terminar
-        }
+      if (tiposEnfermos.isNotEmpty) {
+        return _buildSeleccionEnfermedades(cultivoActual, tiposEnfermos);
       } else {
-        // Si no hay más tipos en este cultivo, pasar al siguiente cultivo
+        // Si no hay más tipos con enfermedad en este cultivo, avanzar al siguiente cultivo
         _cultivoActualIndex++;
-        _tipoActualIndex = 0;
-        return _procesarSeleccionEnfermedades(); // Volver a iterar
+        return _procesarSeleccionEnfermedades();
       }
     }
 
-    // Si ya no hay más cultivos/tipos que procesar, ir al resumen
+    // Si ya no hay más cultivos con tipos enfermos, ir al resumen
     return _buildResumenFinal();
   }
 
@@ -865,7 +898,7 @@ class _ConfiguracionContribucionScreenState
           _estadoSeleccionado;
 
       // ✅ Si el estado es "Con enfermedad", asegurarse de inicializar la lista de enfermedades
-      if (_estadoSeleccionado == "Con_enfermedad") {
+      if (_estadoSeleccionado == "Enfermo") {
         _configuracionFinal[cultivoActual]![tipoActual]
             .putIfAbsent('enfermedades', () => []);
       } else {
