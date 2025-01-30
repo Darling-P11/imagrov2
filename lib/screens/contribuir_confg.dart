@@ -85,13 +85,43 @@ class _ConfiguracionContribucionScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Configurar Contribución'),
-        backgroundColor: Color(0xFF0BA37F),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: _buildStepContent(),
+      body: Column(
+        children: [
+          // ✅ Sección del encabezado con espacio para la barra de estado
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.only(
+              top:
+                  MediaQuery.of(context).padding.top + 15, // Espaciado dinámico
+              bottom: 20, // Espaciado inferior del encabezado
+            ),
+            decoration: BoxDecoration(
+              color: Color(0xFF0BA37F), // Color verde del encabezado
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(40),
+                bottomRight: Radius.circular(40),
+              ),
+            ),
+            child: Center(
+              child: Text(
+                'Configura tu contribución',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+
+          // ✅ Contenido del proceso
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: _buildStepContent(),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -117,59 +147,221 @@ class _ConfiguracionContribucionScreenState
     final List<String> tiposSeleccionados =
         _tiposSeleccionadosPorCultivo[cultivoActual] ?? [];
 
+    // Genera un color basado en el cultivo actual
+    final List<Color> colores = [
+      const Color.fromARGB(255, 2, 96, 173)!,
+      const Color.fromARGB(255, 156, 2, 79)!,
+      const Color.fromARGB(255, 212, 127, 0)!,
+      const Color.fromARGB(255, 139, 0, 163)!,
+      const Color.fromARGB(255, 129, 0, 0)!
+    ];
+    final Color colorCultivo =
+        colores[_cultivoActualIndex % colores.length]; // Alterna colores
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Selecciona los tipos de $cultivoActual:',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        // ✅ Encabezado con "Selecciona las variedades de:" y el nombre del cultivo
+        Row(
+          children: [
+            // Texto fijo "Selecciona las variedades de:"
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey[300], // Color neutro fijo
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'Selecciona las variedades de:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+
+            SizedBox(width: 8),
+
+            // ✅ Container dinámico para el nombre del cultivo
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+              decoration: BoxDecoration(
+                color: colorCultivo, // Color dinámico para cada cultivo
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                cultivoActual,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
         ),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: tiposDisponibles.map((tipo) {
-            final bool isSelected = tiposSeleccionados.contains(tipo);
-            return ChoiceChip(
-              label: Text(tipo),
-              selected: isSelected,
-              selectedColor: Colors.green[100],
-              onSelected: (selected) {
-                setState(() {
-                  if (selected) {
-                    _tiposSeleccionadosPorCultivo[cultivoActual]?.add(tipo);
-                  } else {
-                    _tiposSeleccionadosPorCultivo[cultivoActual]?.remove(tipo);
-                  }
-                });
-              },
-            );
-          }).toList(),
-        ),
-        Spacer(),
-        ElevatedButton(
-          onPressed: () {
-            if (tiposSeleccionados.isNotEmpty) {
-              if (_cultivoActualIndex < _cultivosSeleccionados.length - 1) {
-                setState(() {
-                  _cultivoActualIndex++; // Pasar al siguiente cultivo
-                });
-              } else {
-                setState(() {
-                  _currentStep++; // Pasar al siguiente paso si ya seleccionamos todos los cultivos
-                  _cultivoActualIndex = 0;
-                });
-              }
-            }
-          },
-          child: Text(
-            _cultivoActualIndex < _cultivosSeleccionados.length - 1
-                ? 'Siguiente Cultivo'
-                : 'Siguiente Paso',
+
+        SizedBox(height: 5),
+
+        // ✅ Línea divisoria
+        Divider(color: Colors.grey[400]),
+
+        SizedBox(height: 10),
+
+        Padding(
+          padding: EdgeInsets.only(bottom: 20), // Agrega espacio abajo
+          child: Align(
+            alignment: Alignment.center,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 5),
+              decoration: BoxDecoration(
+                color: Color.fromARGB(255, 16, 184, 144), // Color fijo verde
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'Variedades',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
-          style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0BA37F)),
+        ),
+
+        SizedBox(height: 10),
+
+        // ✅ Lista de variedades con alineación izquierda
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: tiposDisponibles.map((tipo) {
+              final bool isSelected = tiposSeleccionados.contains(tipo);
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      _tiposSeleccionadosPorCultivo[cultivoActual]
+                          ?.remove(tipo);
+                    } else {
+                      _tiposSeleccionadosPorCultivo[cultivoActual]?.add(tipo);
+                    }
+                  });
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isSelected ? Colors.green : Colors.grey,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    color: isSelected ? Colors.green[100] : Colors.white,
+                  ),
+                  child: Text(
+                    tipo,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isSelected ? Colors.green[900] : Colors.black,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+
+        Spacer(),
+
+        // ✅ Botones de navegación alineados al pie de la pantalla con texto en blanco
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _currentStep--;
+                    });
+                  },
+                  icon: Icon(Icons.arrow_back, size: 18, color: Colors.white),
+                  label: Text(
+                    'Atrás',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF0BA37F),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 5),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Cancelar y volver al inicio
+                  },
+                  child: Text(
+                    'Cancelar',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[300],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            ElevatedButton.icon(
+              onPressed: tiposSeleccionados.isNotEmpty
+                  ? () {
+                      if (_cultivoActualIndex <
+                          _cultivosSeleccionados.length - 1) {
+                        setState(() {
+                          _cultivoActualIndex++; // Pasar al siguiente cultivo
+                        });
+                      } else {
+                        setState(() {
+                          _currentStep++; // Pasar al siguiente paso si ya seleccionamos todos los cultivos
+                          _cultivoActualIndex = 0;
+                        });
+                      }
+                    }
+                  : null, // Deshabilita si no hay selección
+              icon: Icon(Icons.arrow_forward, size: 18, color: Colors.white),
+              label: Text(
+                'Siguiente',
+                style: TextStyle(color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF0BA37F),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
+  }
+
+  bool _todosTiposConEstadoSeleccionado(String cultivoActual) {
+    final tiposSeleccionados =
+        _tiposSeleccionadosPorCultivo[cultivoActual] ?? [];
+    for (var tipo in tiposSeleccionados) {
+      if (_configuracionFinal[cultivoActual]?[tipo]?['estado'] == null) {
+        return false; // Si al menos un tipo no tiene estado, retorna false
+      }
+    }
+    return true; // Si todos tienen estado, retorna true
   }
 
   Widget _buildConfiguracionPorTipo() {
@@ -180,78 +372,219 @@ class _ConfiguracionContribucionScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Selecciona el estado de los tipos de $cultivoActual:',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Selecciona el estado de las variedades de:',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              SizedBox(width: 10),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[600], // Color fijo para el cultivo actual
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  cultivoActual,
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+              ),
+            ],
+          ),
         ),
-        SizedBox(height: 10),
+        Divider(thickness: 1, color: Colors.grey[400]),
+        SizedBox(height: 5),
+        Align(
+          alignment: Alignment.center,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 5),
+            decoration: BoxDecoration(
+              color: Color(0xFF0BA37F), // Color verde fijo
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Estados',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 1),
         Expanded(
           child: ListView(
             children: tiposSeleccionados.map((tipo) {
               return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    tipo,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  Container(
+                    width: double.infinity, // Asegurar misma anchura
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      color: Colors.grey[500], // Color del encabezado
+                    ),
+                    child: Column(
+                      children: [
+                        // ✅ Container con el nombre del tipo de cultivo
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[500], // Color del encabezado
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(15),
+                              topRight: Radius.circular(15),
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              tipo,
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        // ✅ Container con los estados
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200], // Fondo gris claro
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(15),
+                              bottomRight: Radius.circular(15),
+                            ),
+                          ),
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: estadosDisponibles.map((estado) {
+                              final bool isSelected =
+                                  _configuracionFinal[cultivoActual]?[tipo]
+                                          ?['estado'] ==
+                                      estado;
+                              return ChoiceChip(
+                                label: Text(estado),
+                                selected: isSelected,
+                                selectedColor: Colors.green[100],
+                                onSelected: (selected) {
+                                  setState(() {
+                                    _configuracionFinal.putIfAbsent(
+                                        cultivoActual, () => {});
+                                    _configuracionFinal[cultivoActual]!
+                                        .putIfAbsent(tipo, () => {});
+                                    _configuracionFinal[cultivoActual]![tipo]
+                                        ['estado'] = estado;
+                                    if (estado == "Con enfermedad") {
+                                      _configuracionFinal[cultivoActual]![tipo]
+                                          ['enfermedades'] = [];
+                                    } else {
+                                      _configuracionFinal[cultivoActual]![tipo]
+                                          ['enfermedades'] = null;
+                                    }
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  SizedBox(height: 5),
-                  Wrap(
-                    spacing: 8,
-                    children: estadosDisponibles.map((estado) {
-                      final bool isSelected = _configuracionFinal[cultivoActual]
-                              ?[tipo]?['estado'] ==
-                          estado;
-                      return ChoiceChip(
-                        label: Text(estado),
-                        selected: isSelected,
-                        selectedColor: Colors.green[100],
-                        onSelected: (selected) {
-                          setState(() {
-                            _configuracionFinal.putIfAbsent(
-                                cultivoActual, () => {});
-                            _configuracionFinal[cultivoActual]!
-                                .putIfAbsent(tipo, () => {});
-                            _configuracionFinal[cultivoActual]![tipo]
-                                ['estado'] = estado;
-                            if (estado == "Con enfermedad") {
-                              _configuracionFinal[cultivoActual]![tipo]
-                                  ['enfermedades'] = [];
-                            } else {
-                              _configuracionFinal[cultivoActual]![tipo]
-                                  ['enfermedades'] = null;
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  SizedBox(height: 15),
-                  Divider(color: Colors.grey[400]),
+                  SizedBox(height: 10),
                 ],
               );
             }).toList(),
           ),
         ),
-        ElevatedButton(
-          onPressed: () {
-            if (_cultivoActualIndex < _cultivosSeleccionados.length - 1) {
-              setState(() {
-                _cultivoActualIndex++; // Pasar al siguiente cultivo
-              });
-            } else {
-              setState(() {
-                _currentStep++; // Pasar al siguiente paso si ya seleccionamos todos los cultivos
-                _cultivoActualIndex = 0;
-              });
-            }
-          },
-          child: Text(
-            _cultivoActualIndex < _cultivosSeleccionados.length - 1
-                ? 'Siguiente Cultivo'
-                : 'Siguiente Paso',
+
+        // ✅ Botones con validación en "Siguiente"
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _currentStep--;
+                  });
+                },
+                icon: Icon(Icons.arrow_back, color: Colors.white),
+                label: Text('Atrás', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF0BA37F),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _currentStep = 0; // Reiniciar todo
+                    _cultivosSeleccionados.clear();
+                    _tiposSeleccionadosPorCultivo.clear();
+                    _configuracionFinal.clear();
+                  });
+                },
+                child: Text('Cancelar', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: _todosTiposConEstadoSeleccionado(cultivoActual)
+                    ? () {
+                        if (_cultivoActualIndex <
+                            _cultivosSeleccionados.length - 1) {
+                          setState(() {
+                            _cultivoActualIndex++;
+                          });
+                        } else {
+                          setState(() {
+                            _currentStep++;
+                            _cultivoActualIndex = 0;
+                          });
+                        }
+                      }
+                    : null, // Deshabilitar si no están todos los estados
+                icon: Icon(Icons.arrow_forward, color: Colors.white),
+                label: Text('Siguiente', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      _todosTiposConEstadoSeleccionado(cultivoActual)
+                          ? Color(0xFF0BA37F)
+                          : Colors.grey, // Cambiar color si está deshabilitado
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ],
           ),
-          style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0BA37F)),
         ),
       ],
     );
@@ -269,49 +602,204 @@ class _ConfiguracionContribucionScreenState
 
     // ✅ Acceder a la lista garantizando que no sea nula
     final List<String> enfermedades = List<String>.from(
-        _configuracionFinal[cultivoActual]![tipoActual]!['enfermedades'] ??
-            <String>[]);
+        _configuracionFinal[cultivoActual]![tipoActual]!['enfermedades'] ?? []);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Selecciona las enfermedades para $tipoActual ($cultivoActual):',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        // ✅ Encabezado de selección
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Selecciona las enfermedades de las variedades de:',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              SizedBox(width: 10),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[600], // Color fijo para el cultivo actual
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  cultivoActual,
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+              ),
+            ],
+          ),
         ),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: enfermedadesDisponibles.map((enfermedad) {
-            final bool isSelected = enfermedades.contains(enfermedad);
 
-            return ChoiceChip(
-              label: Text(enfermedad),
-              selected: isSelected,
-              selectedColor: Colors.orange[100],
-              onSelected: (selected) {
-                setState(() {
-                  if (selected) {
-                    _configuracionFinal[cultivoActual]![tipoActual]![
-                        'enfermedades'] = [...enfermedades, enfermedad];
-                  } else {
-                    _configuracionFinal[cultivoActual]![tipoActual]![
-                            'enfermedades'] =
-                        enfermedades.where((e) => e != enfermedad).toList();
-                  }
-                });
-              },
-            );
-          }).toList(),
+        Divider(thickness: 1, color: Colors.grey[400]),
+        SizedBox(height: 5),
+
+        // ✅ Título "Enfermedades"
+        Align(
+          alignment: Alignment.center,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 5),
+            decoration: BoxDecoration(
+              color: Color(0xFF0BA37F), // Color verde fijo
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Enfermedades',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ),
-        Spacer(),
-        ElevatedButton(
-          onPressed: () {
-            _avanzarAlSiguienteTipoOCultivo();
-            setState(() {}); // Refrescar la UI
-          },
-          child: Text('Siguiente'),
-          style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0BA37F)),
+
+        SizedBox(height: 5),
+
+        // ✅ Contenedor con la selección de enfermedades
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            color: Colors.grey[500], // Color del encabezado
+          ),
+          child: Column(
+            children: [
+              // ✅ Encabezado con el nombre del tipo de cultivo
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.grey[500], // Color del encabezado
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(15),
+                    topRight: Radius.circular(15),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    tipoActual,
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                  ),
+                ),
+              ),
+
+              // ✅ Contenedor con los botones de enfermedades
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200], // Fondo gris claro
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(15),
+                    bottomRight: Radius.circular(15),
+                  ),
+                ),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: enfermedadesDisponibles.map((enfermedad) {
+                    final bool isSelected = enfermedades.contains(enfermedad);
+
+                    return ChoiceChip(
+                      label: Text(enfermedad),
+                      selected: isSelected,
+                      selectedColor: Colors.green[100],
+                      onSelected: (selected) {
+                        setState(() {
+                          if (selected) {
+                            enfermedades.add(enfermedad);
+                          } else {
+                            enfermedades.remove(enfermedad);
+                          }
+                          _configuracionFinal[cultivoActual]![tipoActual]![
+                              'enfermedades'] = enfermedades;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        SizedBox(height: 10),
+
+        // ✅ Botones de navegación
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _currentStep--;
+                  });
+                },
+                icon: Icon(Icons.arrow_back, color: Colors.white),
+                label: Text('Atrás', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF0BA37F),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _currentStep = 0; // Reiniciar todo
+                    _cultivosSeleccionados.clear();
+                    _tiposSeleccionadosPorCultivo.clear();
+                    _configuracionFinal.clear();
+                  });
+                },
+                child: Text('Cancelar', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  if (enfermedades.isNotEmpty) {
+                    _avanzarAlSiguienteTipoOCultivo();
+                    setState(() {});
+                  }
+                },
+                icon: Icon(Icons.arrow_forward, color: Colors.white),
+                label: Text('Siguiente', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      enfermedades.isNotEmpty ? Color(0xFF0BA37F) : Colors.grey,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -349,7 +837,7 @@ class _ConfiguracionContribucionScreenState
             _configuracionFinal[cultivoActual]?[tipoActual]?['estado'] ?? '';
 
         // Si el tipo de cultivo tiene "Con enfermedad", mostrar selección de enfermedades
-        if (estadoActual == "Con_enfermedad") {
+        if (estadoActual == "Enfermo") {
           return _buildSeleccionEnfermedades(cultivoActual, tipoActual);
         } else {
           // Si el tipo no tiene "Con enfermedad", pasar al siguiente
@@ -462,42 +950,108 @@ class _ConfiguracionContribucionScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Selecciona los cultivos:',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: cultivosDisponibles.map((cultivo) {
-            final isSelected = _cultivosSeleccionados.contains(cultivo);
-            return ChoiceChip(
-              label: Text(cultivo),
-              selected: isSelected,
-              selectedColor: Colors.green[100],
-              onSelected: (selected) {
-                setState(() {
-                  if (selected) {
-                    _cultivosSeleccionados.add(cultivo);
-                    _tiposSeleccionadosPorCultivo[cultivo] = [];
-                  } else {
-                    _cultivosSeleccionados.remove(cultivo);
-                    _tiposSeleccionadosPorCultivo.remove(cultivo);
-                  }
-                });
-              },
-            );
-          }).toList(),
+        // ✅ Texto de instrucción dentro de un botón decorativo
+        Container(
+          alignment: Alignment.center,
+          margin: EdgeInsets.symmetric(vertical: 10),
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.grey[300], // Fondo gris claro como en la imagen
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            'Selecciona los cultivos',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
         ),
+
+        // ✅ Lista de cultivos alineados a la izquierda
+        Align(
+          alignment:
+              Alignment.centerLeft, // Cambio aquí para alinear a la izquierda
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: cultivosDisponibles.map((cultivo) {
+              final isSelected = _cultivosSeleccionados.contains(cultivo);
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      _cultivosSeleccionados.remove(cultivo);
+                      _tiposSeleccionadosPorCultivo.remove(cultivo);
+                    } else if (_cultivosSeleccionados.length < 5) {
+                      _cultivosSeleccionados.add(cultivo);
+                      _tiposSeleccionadosPorCultivo[cultivo] = [];
+                    }
+                  });
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isSelected ? Colors.green : Colors.grey,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    color: isSelected ? Colors.green[100] : Colors.white,
+                  ),
+                  child: Text(
+                    cultivo,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isSelected ? Colors.green[900] : Colors.black,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+
         Spacer(),
-        ElevatedButton(
-          onPressed: () {
-            if (_cultivosSeleccionados.isNotEmpty) {
-              setState(() {
-                _currentStep++;
-              });
-            }
-          },
-          child: Text('Siguiente'),
-          style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0BA37F)),
+
+        // ✅ Botones de navegación alineados al pie de la pantalla con texto en blanco
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: Icon(Icons.arrow_back, size: 18, color: Colors.white),
+              label: Text(
+                'Atrás',
+                style: TextStyle(color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromARGB(255, 170, 126, 4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: _cultivosSeleccionados.isNotEmpty
+                  ? () {
+                      setState(() {
+                        _currentStep++;
+                      });
+                    }
+                  : null, // Deshabilita si no hay selección
+              icon: Icon(Icons.arrow_forward, size: 18, color: Colors.white),
+              label: Text(
+                'Siguiente',
+                style: TextStyle(color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF0BA37F),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
