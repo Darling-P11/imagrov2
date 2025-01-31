@@ -91,12 +91,11 @@ class _ConfiguracionContribucionScreenState
           Container(
             width: double.infinity,
             padding: EdgeInsets.only(
-              top:
-                  MediaQuery.of(context).padding.top + 15, // Espaciado dinámico
-              bottom: 20, // Espaciado inferior del encabezado
+              top: MediaQuery.of(context).padding.top + 15,
+              bottom: 20,
             ),
             decoration: BoxDecoration(
-              color: Color(0xFF0BA37F), // Color verde del encabezado
+              color: Color(0xFF0BA37F),
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(40),
                 bottomRight: Radius.circular(40),
@@ -114,6 +113,9 @@ class _ConfiguracionContribucionScreenState
             ),
           ),
 
+          // ✅ Barra de progreso
+          _buildProgressIndicator(),
+
           // ✅ Contenido del proceso
           Expanded(
             child: Padding(
@@ -123,6 +125,49 @@ class _ConfiguracionContribucionScreenState
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProgressIndicator() {
+    int totalSteps = 5; // Número total de pasos
+    double progress = (_currentStep + 1) / totalSteps; // Cálculo del progreso
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // 🔹 Barra de progreso de fondo (gris claro)
+              Container(
+                height: 8,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              // 🔹 Barra de progreso dinámica (Cambia de rojo a verde)
+              AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                height: 8,
+                width: MediaQuery.of(context).size.width * progress,
+                decoration: BoxDecoration(
+                  color: Color.lerp(Colors.red, Colors.green,
+                      progress), // Cambio de color dinámico
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 5), // Espacio entre la barra y el texto
+        Text(
+          "Paso ${_currentStep + 1} de $totalSteps",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ],
     );
   }
 
@@ -919,63 +964,147 @@ class _ConfiguracionContribucionScreenState
         ),
         SizedBox(height: 10),
         ..._configuracionFinal.entries.map((cultivoEntry) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '🌱 Cultivo: ${cultivoEntry.key}',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green[800],
-                ),
-              ),
-              Divider(color: Colors.grey),
-              ...cultivoEntry.value.entries.map((tipoEntry) {
-                final String tipo = tipoEntry.key;
-                final String estado =
-                    tipoEntry.value['estado'] ?? 'No especificado';
-                final List<String> enfermedades =
-                    (tipoEntry.value['enfermedades'] as List<String>? ?? []);
-
-                return Padding(
-                  padding: const EdgeInsets.only(left: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '🌿 Tipo: $tipo',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        '🩺 Estado: $estado',
-                        style: TextStyle(fontSize: 14),
-                      ),
-                      if (enfermedades.isNotEmpty)
-                        Text(
-                          '⚠️ Enfermedades: ${enfermedades.join(', ')}',
-                          style:
-                              TextStyle(fontSize: 14, color: Colors.red[700]),
-                        ),
-                      SizedBox(height: 10),
-                      Divider(color: Colors.grey[400]),
-                    ],
+          return Card(
+            elevation: 3, // Sombra para resaltar la tarjeta
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 🔹 Cultivo como título principal en negrita
+                  Text(
+                    '🌱 Cultivo: ${cultivoEntry.key}',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green[800],
+                    ),
                   ),
-                );
-              }).toList(),
-            ],
+                  Divider(color: Colors.grey[400]),
+
+                  // 🔹 Tipos de cultivo en lista
+                  ...cultivoEntry.value.entries.map((tipoEntry) {
+                    final String tipo = tipoEntry.key;
+                    final String estado =
+                        tipoEntry.value['estado'] ?? 'No especificado';
+                    final List<String> enfermedades =
+                        (tipoEntry.value['enfermedades'] as List<String>? ??
+                            []);
+
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ✅ Tipo de cultivo en negrita con icono
+                          Row(
+                            children: [
+                              Icon(Icons.local_florist, color: Colors.green),
+                              SizedBox(width: 5),
+                              Text(
+                                tipo,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            '🩺 Estado: $estado',
+                            style: TextStyle(fontSize: 14),
+                          ),
+
+                          // ✅ Enfermedades en una lista con viñetas
+                          if (enfermedades.isNotEmpty)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '⚠️ Enfermedades:',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                ...enfermedades.map((e) => Text(
+                                      '• $e',
+                                      style: TextStyle(fontSize: 14),
+                                    )),
+                              ],
+                            ),
+                          SizedBox(height: 5),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
+            ),
           );
         }).toList(),
         SizedBox(height: 20),
+
+        //boton
         ElevatedButton(
           onPressed: () {
-            Navigator.pop(context); // Volver al inicio o a donde corresponda
+            _mostrarDialogoConfirmacion();
           },
-          child: Text('Finalizar'),
-          style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0BA37F)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color(0xFF0BA37F),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          child: Text(
+            'Finalizar',
+            style: TextStyle(color: Colors.white), // ✅ Hace el texto blanco
+          ),
         ),
       ],
+    );
+  }
+
+  void _mostrarDialogoConfirmacion() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Confirmar configuración"),
+          content: Text(
+              "¿Estás seguro de que deseas finalizar la configuración?\n \nAl confirmar la configuración se almacenará tu configuracion y se te generará un respaldo de la configuración."),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20), // Bordes redondeados
+          ),
+          actions: [
+            // 🔹 Botón Cancelar (Mantiene al usuario en la pantalla)
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cierra el diálogo
+              },
+              child: Text("Cancelar", style: TextStyle(color: Colors.red)),
+            ),
+
+            // 🔹 Botón Confirmar (Vuelve a la pantalla principal)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cierra el diálogo
+                Navigator.pop(
+                    context); // Vuelve a la pantalla anterior o al home
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF0BA37F), // Verde
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: Text("Confirmar", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -13,13 +13,12 @@ import 'package:imagro/screens/contribuir_confg.dart';
 import 'package:imagro/screens/carga_contribuir.dart'; // Importa la pantalla de carga de contribuciones
 
 void main() async {
-  WidgetsFlutterBinding
-      .ensureInitialized();
-      // Inicializa widgets antes de Firebase
+  WidgetsFlutterBinding.ensureInitialized();
+  // Inicializa widgets antes de Firebase
   await Firebase.initializeApp(); // Inicializa Firebase
   await initializeDateFormatting(
       'es_ES', null); // Inicializa el idioma español para fechas
-      
+
   runApp(MyApp());
 }
 
