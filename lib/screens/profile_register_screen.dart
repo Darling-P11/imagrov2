@@ -11,7 +11,7 @@ class ProfileRegisterScreen extends StatefulWidget {
   final String email;
   final String password;
 
-  ProfileRegisterScreen({required this.email, required this.password});
+  const ProfileRegisterScreen({super.key, required this.email, required this.password});
 
   @override
   _ProfileRegisterScreenState createState() => _ProfileRegisterScreenState();

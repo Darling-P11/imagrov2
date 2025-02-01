@@ -8,7 +8,7 @@ class HeaderWidget extends StatelessWidget {
   final String? userImage;
   final String? userName; // Nuevo: Nombre del usuario
 
-  HeaderWidget({this.user, this.userImage, this.userName});
+  const HeaderWidget({super.key, this.user, this.userImage, this.userName});
 
   @override
   Widget build(BuildContext context) {

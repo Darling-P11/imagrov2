@@ -5,6 +5,8 @@ import 'password_register_screen.dart';
 import 'password_login_screen.dart';
 
 class EnterEmailScreen extends StatefulWidget {
+  const EnterEmailScreen({super.key});
+
   @override
   _EnterEmailScreenState createState() => _EnterEmailScreenState();
 }

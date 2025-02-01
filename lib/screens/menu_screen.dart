@@ -6,6 +6,8 @@ import 'package:imagro/widgets/funcionalidades_menu.dart';
 import 'package:imagro/widgets/flotante_pie_menu.dart';
 
 class MenuScreen extends StatefulWidget {
+  const MenuScreen({super.key});
+
   @override
   _MenuScreenState createState() => _MenuScreenState();
 }
@@ -37,7 +39,7 @@ class _MenuScreenState extends State<MenuScreen> {
 
         if (userDoc.exists) {
           setState(() {
-            userImage = userDoc.data()?['profileImage'] ?? null;
+            userImage = userDoc.data()?['profileImage'];
             userName = userDoc.data()?['name'] ?? user.displayName; // Aquí
           });
         }

@@ -5,7 +5,7 @@ import 'profile_register_screen.dart';
 class PasswordRegisterScreen extends StatefulWidget {
   final String email;
 
-  PasswordRegisterScreen({required this.email});
+  const PasswordRegisterScreen({super.key, required this.email});
 
   @override
   _PasswordRegisterScreenState createState() => _PasswordRegisterScreenState();

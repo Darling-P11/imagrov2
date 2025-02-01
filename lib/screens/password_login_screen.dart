@@ -6,7 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class PasswordLoginScreen extends StatefulWidget {
   final String email;
 
-  PasswordLoginScreen({required this.email});
+  const PasswordLoginScreen({super.key, required this.email});
 
   @override
   _PasswordLoginScreenState createState() => _PasswordLoginScreenState();
@@ -17,7 +17,7 @@ class _PasswordLoginScreenState extends State<PasswordLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
-  String _errorMessage = '';
+  final String _errorMessage = '';
   String? userName;
   String? userProfileImage;
   bool _canRequestPasswordReset =

@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class ConfiguracionContribucionScreen extends StatefulWidget {
+  const ConfiguracionContribucionScreen({super.key});
+
   @override
   _ConfiguracionContribucionScreenState createState() =>
       _ConfiguracionContribucionScreenState();
@@ -10,14 +19,14 @@ class ConfiguracionContribucionScreen extends StatefulWidget {
 class _ConfiguracionContribucionScreenState
     extends State<ConfiguracionContribucionScreen> {
   int _currentStep = 0;
-  List<String> _cultivosSeleccionados = [];
-  Map<String, List<String>> _tiposSeleccionadosPorCultivo = {};
-  Map<String, Map<String, dynamic>> _configuracionFinal = {};
+  final List<String> _cultivosSeleccionados = [];
+  final Map<String, List<String>> _tiposSeleccionadosPorCultivo = {};
+  final Map<String, Map<String, dynamic>> _configuracionFinal = {};
 
   int _cultivoActualIndex = 0;
   int _tipoActualIndex = 0;
-  String _estadoSeleccionado = '';
-  List<String> _enfermedadesSeleccionadas = [];
+  final String _estadoSeleccionado = '';
+  final List<String> _enfermedadesSeleccionadas = [];
 
   List<String> cultivosDisponibles = [];
   Map<String, List<String>> tiposPorCultivo = {};
@@ -194,11 +203,11 @@ class _ConfiguracionContribucionScreenState
 
     // Genera un color basado en el cultivo actual
     final List<Color> colores = [
-      const Color.fromARGB(255, 2, 96, 173)!,
-      const Color.fromARGB(255, 156, 2, 79)!,
-      const Color.fromARGB(255, 212, 127, 0)!,
-      const Color.fromARGB(255, 139, 0, 163)!,
-      const Color.fromARGB(255, 129, 0, 0)!
+      const Color.fromARGB(255, 2, 96, 173),
+      const Color.fromARGB(255, 156, 2, 79),
+      const Color.fromARGB(255, 212, 127, 0),
+      const Color.fromARGB(255, 139, 0, 163),
+      const Color.fromARGB(255, 129, 0, 0)
     ];
     final Color colorCultivo =
         colores[_cultivoActualIndex % colores.length]; // Alterna colores
@@ -351,15 +360,15 @@ class _ConfiguracionContribucionScreenState
                   onPressed: () {
                     Navigator.pop(context); // Cancelar y volver al inicio
                   },
-                  child: Text(
-                    'Cancelar',
-                    style: TextStyle(color: Colors.white),
-                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red[300],
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
+                  ),
+                  child: Text(
+                    'Cancelar',
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
               ],
@@ -592,13 +601,13 @@ class _ConfiguracionContribucionScreenState
                     _configuracionFinal.clear();
                   });
                 },
-                child: Text('Cancelar', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
+                child: Text('Cancelar', style: TextStyle(color: Colors.white)),
               ),
               ElevatedButton.icon(
                 onPressed: _todosTiposConEstadoSeleccionado(cultivoActual)
@@ -809,13 +818,13 @@ class _ConfiguracionContribucionScreenState
                     _configuracionFinal.clear();
                   });
                 },
-                child: Text('Cancelar', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
+                child: Text('Cancelar', style: TextStyle(color: Colors.white)),
               ),
               ElevatedButton.icon(
                 onPressed: () {
@@ -1039,18 +1048,18 @@ class _ConfiguracionContribucionScreenState
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),
           );
-        }).toList(),
+        }),
         SizedBox(height: 20),
 
         //boton
         ElevatedButton(
           onPressed: () {
-            _mostrarDialogoConfirmacion();
+            _mostrarDialogoConfirmacion(context);
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Color(0xFF0BA37F),
@@ -1067,45 +1076,200 @@ class _ConfiguracionContribucionScreenState
     );
   }
 
-  void _mostrarDialogoConfirmacion() {
+  // 🔹 Función para guardar la configuración en un archivo JSON
+  Future<void> _guardarConfiguracionEnJSON() async {
+    try {
+      // 📌 Convertir la configuración a JSON
+      String jsonConfiguracion = jsonEncode(_configuracionFinal);
+
+      // ✅ Obtener la carpeta de descargas
+      Directory? downloadsDir;
+      if (Platform.isAndroid) {
+        downloadsDir = Directory(
+            '/storage/emulated/0/Download'); // Ruta estándar en Android
+      } else if (Platform.isIOS) {
+        downloadsDir = await getApplicationDocumentsDirectory();
+      }
+
+      if (downloadsDir == null || !await downloadsDir.exists()) {
+        Fluttertoast.showToast(
+            msg: "⚠️ No se encontró la carpeta de descargas.",
+            toastLength: Toast.LENGTH_LONG);
+        return;
+      }
+
+      // 📂 Crear el archivo JSON en la carpeta de descargas
+      String filePath = '${downloadsDir.path}/configuracion_contribucion.json';
+      File jsonFile = File(filePath);
+      await jsonFile.writeAsString(jsonConfiguracion);
+
+      // 🔹 Mostrar un mensaje de éxito
+      Fluttertoast.showToast(
+          msg: "Archivo guardado en Descargas", toastLength: Toast.LENGTH_LONG);
+    } catch (e) {
+      print("❌ Error al guardar el archivo JSON: $e");
+      Fluttertoast.showToast(
+          msg: "❌ Error al guardar el archivo", toastLength: Toast.LENGTH_LONG);
+    }
+  }
+
+// 🔹 Agregar opción en el diálogo de confirmación
+  void _mostrarDialogoConfirmacion(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Confirmar configuración"),
-          content: Text(
-              "¿Estás seguro de que deseas finalizar la configuración?\n \nAl confirmar la configuración se almacenará tu configuracion y se te generará un respaldo de la configuración."),
+        return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20), // Bordes redondeados
+            borderRadius: BorderRadius.circular(20),
           ),
-          actions: [
-            // 🔹 Botón Cancelar (Mantiene al usuario en la pantalla)
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cierra el diálogo
-              },
-              child: Text("Cancelar", style: TextStyle(color: Colors.red)),
-            ),
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ✅ Ícono decorativo
+                Icon(Icons.check_circle, size: 60, color: Color(0xFF0BA37F)),
 
-            // 🔹 Botón Confirmar (Vuelve a la pantalla principal)
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Cierra el diálogo
-                Navigator.pop(
-                    context); // Vuelve a la pantalla anterior o al home
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF0BA37F), // Verde
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                SizedBox(height: 10),
+
+                // ✅ Título
+                Text(
+                  "Confirma la configuración",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
-              ),
-              child: Text("Confirmar", style: TextStyle(color: Colors.white)),
+
+                SizedBox(height: 10),
+
+                // ✅ Mensaje descriptivo
+                Text(
+                  "Tu configuración ha sido completada.\n\n"
+                  "El archivo se guardará y podrás compartirlo. Luego, "
+                  "procederás a la carga de imágenes.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.black54),
+                ),
+
+                SizedBox(height: 20),
+
+                // ✅ Botones organizados en Column con el mismo ancho para alineación
+                Column(
+                  children: [
+                    // Primera fila: Cancelar y Compartir
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // ❌ Botón Cancelar (ahora con color rojo y mismo tamaño que Compartir)
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => Navigator.pop(context),
+                            icon: Icon(Icons.cancel,
+                                size: 18, color: Colors.white),
+                            label: Text("Cancelar",
+                                style: TextStyle(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.redAccent, // Color rojo
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10), // Espacio entre botones
+                        // 📤 Botón Compartir JSON
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              await _compartirConfiguracionJSON();
+                            },
+                            icon: Icon(Icons.share,
+                                size: 18, color: Colors.white),
+                            label: Text("Compartir",
+                                style: TextStyle(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 10), // Espacio entre filas de botones
+
+                    // Segunda fila: Guardar y Continuar
+                    SizedBox(
+                      width: double.infinity, // Botón grande alineado al centro
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          await _guardarConfiguracionEnJSON();
+                          Navigator.pop(context);
+                          _irACargaImagenes(); // Redirige a la pantalla de carga de imágenes
+                        },
+                        icon: Icon(Icons.save, size: 18, color: Colors.white),
+                        label: Text("Guardar y continuar",
+                            style: TextStyle(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF0BA37F),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
+  }
+
+// 🔹 Función para compartir el archivo JSON
+  Future<void> _compartirConfiguracionJSON() async {
+    try {
+      Directory? downloadsDir;
+      if (Platform.isAndroid) {
+        downloadsDir = Directory('/storage/emulated/0/Download');
+      } else if (Platform.isIOS) {
+        downloadsDir = await getApplicationDocumentsDirectory();
+      }
+
+      if (downloadsDir == null || !await downloadsDir.exists()) {
+        Fluttertoast.showToast(
+            msg: "⚠️ No se encontró la carpeta de descargas.",
+            toastLength: Toast.LENGTH_LONG);
+        return;
+      }
+
+      String filePath = '${downloadsDir.path}/configuracion_contribucion.json';
+      File jsonFile = File(filePath);
+
+      if (await jsonFile.exists()) {
+        await Share.shareFiles([jsonFile.path],
+            text: "Aquí está mi configuración.");
+      } else {
+        Fluttertoast.showToast(
+            msg: "❌ Archivo no encontrado.", toastLength: Toast.LENGTH_LONG);
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+          msg: "❌ Error al compartir el archivo.",
+          toastLength: Toast.LENGTH_LONG);
+    }
+  }
+
+// 🔹 Función para redirigir a la pantalla de carga de imágenes
+  void _irACargaImagenes() {
+    Navigator.pushReplacementNamed(context, '/carga-contribucion');
   }
 
   Widget _buildSeleccionCultivos() {

@@ -23,6 +23,8 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -45,9 +47,7 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => ProfileScreen(),
         '/configuracion-contribucion': (context) =>
             ConfiguracionContribucionScreen(),
-        '/carga-contribucion': (context) => CargaContribuirScreen(
-              estructuraEtiquetas: {}, // Debe ser actualizado al navegar
-            ),
+        '/carga-contribucion': (context) => CargaContribuirScreen(),
       },
     );
   }

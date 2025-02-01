@@ -6,7 +6,7 @@ class ProfileDropdownMenu extends StatelessWidget {
   final String? userImage;
   final String? userName;
 
-  ProfileDropdownMenu({this.user, this.userImage, this.userName});
+  const ProfileDropdownMenu({super.key, this.user, this.userImage, this.userName});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class ProfileDropdownMenu extends StatelessWidget {
       itemBuilder: (context) => [
         PopupMenuItem(
           enabled: false,
-          child: Container(
+          child: SizedBox(
             width: 220, // Ancho del menú
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

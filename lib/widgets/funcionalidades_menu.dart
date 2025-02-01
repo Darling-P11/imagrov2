@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class FunctionalitiesWidget extends StatelessWidget {
+  const FunctionalitiesWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Padding(
