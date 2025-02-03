@@ -3,10 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ConfiguracionContribucionScreen extends StatefulWidget {
   const ConfiguracionContribucionScreen({super.key});
@@ -1134,7 +1134,7 @@ class _ConfiguracionContribucionScreenState
 
                 // ✅ Título
                 Text(
-                  "Confirma la configuración",
+                  "Confirmar configuración",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 18,
@@ -1156,14 +1156,14 @@ class _ConfiguracionContribucionScreenState
 
                 SizedBox(height: 20),
 
-                // ✅ Botones organizados en Column con el mismo ancho para alineación
+                // ✅ Botones organizados
                 Column(
                   children: [
                     // Primera fila: Cancelar y Compartir
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        // ❌ Botón Cancelar (ahora con color rojo y mismo tamaño que Compartir)
+                        // ❌ Botón Cancelar
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () => Navigator.pop(context),
@@ -1172,7 +1172,7 @@ class _ConfiguracionContribucionScreenState
                             label: Text("Cancelar",
                                 style: TextStyle(color: Colors.white)),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.redAccent, // Color rojo
+                              backgroundColor: Colors.redAccent,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -1201,16 +1201,14 @@ class _ConfiguracionContribucionScreenState
                       ],
                     ),
 
-                    SizedBox(height: 10), // Espacio entre filas de botones
+                    SizedBox(height: 10),
 
-                    // Segunda fila: Guardar y Continuar
+                    // Segunda fila: Guardar y Continuar (Llama a _guardarConfiguracionEnFirestore)
                     SizedBox(
-                      width: double.infinity, // Botón grande alineado al centro
+                      width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: () async {
-                          await _guardarConfiguracionEnJSON();
-                          Navigator.pop(context);
-                          _irACargaImagenes(); // Redirige a la pantalla de carga de imágenes
+                          await _guardarConfiguracionEnFirestore(); // 📌 Llamada a la función
                         },
                         icon: Icon(Icons.save, size: 18, color: Colors.white),
                         label: Text("Guardar y continuar",
@@ -1381,5 +1379,56 @@ class _ConfiguracionContribucionScreenState
         ),
       ],
     );
+  }
+
+  //ALMACENAR CONFIGURACIONES A FIREBASE
+  Future<void> _guardarConfiguracionEnFirestore() async {
+    try {
+      // Obtener el usuario autenticado
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        print("❌ Usuario no autenticado.");
+        return;
+      }
+
+      String userId = user.uid; // ID del usuario
+
+      // Construir la configuración a guardar
+      Map<String, dynamic> configuracionData = {
+        "usuarioId": userId,
+        "cultivos": _cultivosSeleccionados,
+        "configuracionCompleta": _configuracionFinal,
+        "fecha": FieldValue.serverTimestamp(),
+        "estado": "pendiente" // Se marca como pendiente
+      };
+
+      // Guardar en Firestore
+      await FirebaseFirestore.instance
+          .collection('configuracionesUsuarios')
+          .doc(userId) // ID del usuario como documento principal
+          .set(configuracionData);
+
+      print("✅ Configuración guardada en Firestore correctamente.");
+      // ✅ Mostrar Toast como feedback
+      Fluttertoast.showToast(
+        msg: "Configuración guardada correctamente",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+      );
+
+      // Redirigir a splash_screen.dart para que haga la verificación
+      Navigator.pushReplacementNamed(context, '/');
+    } catch (e) {
+      print("❌ Error al guardar en Firestore: $e");
+      Fluttertoast.showToast(
+        msg: "Error al guardar configuración",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
   }
 }

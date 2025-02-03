@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'home_screen.dart';
 import 'menu_screen.dart';
+import 'carga_contribuir.dart'; // Importa la pantalla de carga de contribuciones
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,27 +17,45 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkUserSession();
+    _verificarUsuarioYConfiguracion();
   }
 
-  Future<void> _checkUserSession() async {
+  Future<void> _verificarUsuarioYConfiguracion() async {
     // Simular tiempo de carga
     await Future.delayed(Duration(seconds: 3));
 
     // Verificar si hay un usuario autenticado
     User? currentUser = FirebaseAuth.instance.currentUser;
 
-    if (currentUser != null) {
-      // Usuario autenticado, redirigir al menú
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => MenuScreen()),
-      );
-    } else {
-      // Usuario no autenticado, redirigir al inicio
+    if (currentUser == null) {
+      // ❌ Usuario no autenticado → Ir a pantalla de inicio
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => HomeScreen()),
+      );
+      return;
+    }
+
+    String userId = currentUser.uid;
+
+    // 🔍 Consultar Firestore para verificar si hay una configuración pendiente
+    DocumentSnapshot userConfig = await FirebaseFirestore.instance
+        .collection('configuracionesUsuarios')
+        .doc(userId)
+        .get();
+
+    if (userConfig.exists && userConfig['estado'] == 'pendiente') {
+      print(
+          "🔹 Configuración pendiente encontrada. Redirigiendo a carga de imágenes...");
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => CargaContribuirScreen()),
+      );
+    } else {
+      print("✅ No hay configuraciones pendientes.");
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => MenuScreen()),
       );
     }
   }
@@ -43,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.green, // Color de fondo verde
+      backgroundColor: Colors.green,
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -54,7 +74,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/images/logo.png', // Ruta de la imagen del logo
+                    'assets/images/logo.png',
                     width: 150,
                     height: 150,
                   ),
