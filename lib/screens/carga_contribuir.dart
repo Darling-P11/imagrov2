@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CargaContribuirScreen extends StatefulWidget {
   @override
@@ -6,47 +9,104 @@ class CargaContribuirScreen extends StatefulWidget {
 }
 
 class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
-  bool opcionesVisibles = true;
   bool enModoCuadricula = false;
-  double tamanoLista =
-      70.0; // Tamaño fijo para vista de lista (scroll horizontal)
-  double tamanoCuadricula = 90.0; // Tamaño fijo para vista de cuadrícula
-  List<String> imagenes = [];
+  bool cargando = true;
+  List<Map<String, dynamic>> secciones = [];
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarConfiguracion();
+  }
+
+  Future<void> _cargarConfiguracion() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    String userId = user.uid;
+    DocumentSnapshot userConfig = await FirebaseFirestore.instance
+        .collection('configuracionesUsuarios')
+        .doc(userId)
+        .get();
+
+    if (userConfig.exists) {
+      Map<String, dynamic> configData =
+          userConfig.data() as Map<String, dynamic>;
+
+      List<Map<String, dynamic>> seccionesTemp = [];
+
+      // 🔹 Iterar sobre cada cultivo y sus tipos
+      configData['configuracionCompleta'].forEach((cultivo, tipos) {
+        tipos.forEach((tipo, detalles) {
+          String estado = detalles['estado'];
+          List<dynamic> enfermedades = detalles['enfermedades'] ?? [];
+
+          if (estado == "Sano") {
+            seccionesTemp.add({
+              'cultivo': cultivo,
+              'tipo': tipo,
+              'estado': estado,
+              'enfermedad': null,
+              'imagenes': [],
+              'expandido': false
+            });
+          } else if (estado == "Enfermo") {
+            enfermedades.forEach((enfermedad) {
+              seccionesTemp.add({
+                'cultivo': cultivo,
+                'tipo': tipo,
+                'estado': estado,
+                'enfermedad': enfermedad,
+                'imagenes': [],
+                'expandido': false
+              });
+            });
+          } else if (estado == "Mixto") {
+            // 🔹 Una única sección donde se integran sanos y enfermos en la misma vista
+            seccionesTemp.add({
+              'cultivo': cultivo,
+              'tipo': tipo,
+              'estado': estado,
+              'enfermedades': enfermedades, // Guardamos todas las enfermedades
+              'imagenes': [],
+              'expandido': false
+            });
+          }
+        });
+      });
+
+      setState(() {
+        secciones = seccionesTemp;
+        cargando = false;
+      });
+    }
+  }
+
+  Future<void> _seleccionarImagen(String tipo, int index) async {
+    final XFile? image = await _picker.pickImage(
+        source: tipo == "camera" ? ImageSource.camera : ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        secciones[index]['imagenes'].add(image.path);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (cargando) {
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       body: Column(
         children: [
-          // ✅ Sección del encabezado
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 15,
-              bottom: 20,
-            ),
-            decoration: BoxDecoration(
-              color: Color(0xFF0BA37F),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(40),
-                bottomRight: Radius.circular(40),
-              ),
-            ),
-            child: Center(
-              child: Text(
-                'Configura tu contribución',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-
+          _buildEncabezado(),
           SizedBox(height: 20),
-
-          // ✅ Título
           Text(
             "Adjunta tus imágenes a enviar",
             style: TextStyle(
@@ -55,74 +115,14 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
               color: Colors.grey[700],
             ),
           ),
-
           SizedBox(height: 10),
-
-          // ✅ Botones de control de vista (sin zoom)
-          _buildControlButtons(),
-
-          SizedBox(height: 10),
-
-          // ✅ Contenedor principal
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 20),
-            padding: EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.green[50],
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              children: [
-                // ✅ Selector de categoría
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      opcionesVisibles = !opcionesVisibles;
-                    });
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              opcionesVisibles
-                                  ? Icons.keyboard_arrow_down
-                                  : Icons.keyboard_arrow_up,
-                              color: Colors.grey[700],
-                            ),
-                            SizedBox(width: 5),
-                            Text(
-                              "Cacao > Nacional > Natural",
-                              style: TextStyle(
-                                  fontSize: 14, color: Colors.grey[700]),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          "${imagenes.length}/100",
-                          style:
-                              TextStyle(fontSize: 14, color: Colors.grey[500]),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: 10),
-
-                // ✅ Vista de imágenes (lista o cuadrícula)
-                if (opcionesVisibles)
-                  enModoCuadricula
-                      ? _buildGridView()
-                      : _buildHorizontalScroll(),
-              ],
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              itemCount: secciones.length,
+              itemBuilder: (context, index) {
+                return _buildSeccion(secciones[index], index);
+              },
             ),
           ),
         ],
@@ -130,149 +130,144 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
     );
   }
 
-  // ✅ Botones de control (sin zoom)
-  Widget _buildControlButtons() {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Container(
-        margin: EdgeInsets.only(right: 15),
-        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildControlButton(
-                enModoCuadricula ? Icons.view_list : Icons.grid_view, () {
-              setState(() {
-                enModoCuadricula = !enModoCuadricula;
-              });
-            }),
-            _buildControlButton(Icons.pan_tool, () {
-              setState(() {
-                enModoCuadricula = false;
-              });
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ✅ Botón individual
-  Widget _buildControlButton(IconData icon, VoidCallback onPressed) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          shape: CircleBorder(),
-          padding: EdgeInsets.all(6),
-          backgroundColor: Color(0xFF0BA37F),
-          elevation: 0,
-        ),
-        onPressed: onPressed,
-        child: Icon(icon, color: Colors.white, size: 16),
-      ),
-    );
-  }
-
-  // ✅ Modo lista
-  Widget _buildHorizontalScroll() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _buildImageOption(Icons.camera_alt, "camera", tamanoLista),
-          SizedBox(width: 10),
-          _buildImageOption(Icons.image, "gallery", tamanoLista),
-          ...imagenes
-              .map((img) => _buildImagePreview(img, tamanoLista))
-              .toList(),
-        ],
-      ),
-    );
-  }
-
-  // ✅ Modo cuadrícula con correcciones
-  Widget _buildGridView() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      itemCount: imagenes.length + 2,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-      ),
-      itemBuilder: (context, index) {
-        if (index == 0)
-          return _buildImageOption(
-              Icons.camera_alt, "camera", tamanoCuadricula);
-        if (index == 1)
-          return _buildImageOption(Icons.image, "gallery", tamanoCuadricula);
-        return _buildImagePreview(imagenes[index - 2], tamanoCuadricula);
-      },
-    );
-  }
-
-  // ✅ Iconos dentro de la cuadrícula corregidos
-  Widget _buildImageOption(IconData icon, String type, double size) {
+  Widget _buildEncabezado() {
     return Container(
-      width: size,
-      height: size,
+      width: double.infinity,
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 15,
+        bottom: 20,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+        color: Color(0xFF0BA37F),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
       ),
       child: Center(
-        child: Icon(icon, color: Color(0xFF0BA37F), size: size * 0.5),
+        child: Text(
+          'Sube tu contribución',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
 
-  // ✅ Vista previa de imágenes con botón de eliminar ajustado
-  Widget _buildImagePreview(String label, double size) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: size,
-          height: size,
-          margin: EdgeInsets.symmetric(horizontal: 5),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
-          ),
-          child: Center(
-            child: Text(label,
-                style: TextStyle(fontSize: size * 0.15, color: Colors.grey)),
-          ),
-        ),
-        Positioned(
-          top: -6,
-          right: -6,
-          child: GestureDetector(
+  Widget _buildSeccion(Map<String, dynamic> datos, int index) {
+    String titulo =
+        "${datos['cultivo']} > ${datos['tipo']} > ${datos['estado']}";
+    if (datos.containsKey('enfermedad') && datos['enfermedad'] != null) {
+      titulo += " > ${datos['enfermedad']}";
+    }
+
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 10),
+      padding: EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.green[50],
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          GestureDetector(
             onTap: () {
               setState(() {
-                imagenes.remove(label);
+                secciones[index]['expandido'] = !secciones[index]['expandido'];
               });
             },
             child: Container(
-              width: 20,
-              height: 20,
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.close, color: Colors.white, size: 14),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        secciones[index]['expandido']
+                            ? Icons.keyboard_arrow_down
+                            : Icons.keyboard_arrow_right,
+                        color: Colors.grey[700],
+                      ),
+                      SizedBox(width: 5),
+                      Text(
+                        titulo,
+                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    "${datos['imagenes'].length}/100",
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
+          if (secciones[index]['expandido']) ...[
+            SizedBox(height: 10),
+            _buildBotonesSubida(index),
+            SizedBox(height: 10),
+            _buildVistaImagenes(datos),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBotonesSubida(int index) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildBotonSubida(Icons.camera_alt, "camera", index),
+        SizedBox(width: 15),
+        _buildBotonSubida(Icons.image, "gallery", index),
       ],
+    );
+  }
+
+  Widget _buildBotonSubida(IconData icon, String tipo, int index) {
+    return GestureDetector(
+      onTap: () => _seleccionarImagen(tipo, index),
+      child: Container(
+        padding: EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+        ),
+        child: Icon(icon, color: Color(0xFF0BA37F), size: 30),
+      ),
+    );
+  }
+
+  Widget _buildVistaImagenes(Map<String, dynamic> datos) {
+    return Wrap(
+      spacing: 10,
+      children: datos['imagenes'].map<Widget>((imagen) {
+        return Stack(
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                image: DecorationImage(
+                  image: AssetImage(imagen), // Muestra la imagen seleccionada
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ],
+        );
+      }).toList(),
     );
   }
 }
