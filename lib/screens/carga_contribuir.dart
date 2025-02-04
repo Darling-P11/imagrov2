@@ -764,6 +764,10 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
       return;
     }
 
+    // 🔹 Confirmación antes de enviar
+    bool confirmar = await _mostrarDialogoConfirmacionEnvio();
+    if (!confirmar) return;
+
     Fluttertoast.showToast(
         msg: "Iniciando subida de contribución...",
         backgroundColor: Colors.green);
@@ -785,6 +789,29 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
         .id;
 
     List<Map<String, dynamic>> imagenesSubidas = [];
+    int totalImagenes = secciones.fold<int>(
+        0, (sum, seccion) => sum + (seccion["imagenes"] as List).length);
+
+    int imagenesSubidasCount = 0;
+
+    // 🔹 Mostrar diálogo de carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Subiendo imágenes"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LinearProgressIndicator(value: 0.0),
+              SizedBox(height: 10),
+              Text("0 / $totalImagenes imágenes subidas"),
+            ],
+          ),
+        );
+      },
+    );
 
     for (var seccion in secciones) {
       String cultivo = seccion['cultivo'];
@@ -805,7 +832,7 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
           TaskSnapshot snapshot = await uploadTask;
           String imageUrl = await snapshot.ref.getDownloadURL();
 
-          // 🔹 Obtener metadatos de ubicación (si están disponibles)
+          // 🔹 Obtener ubicación (si está disponible)
           Position? posicion = await Geolocator.getCurrentPosition(
               desiredAccuracy: LocationAccuracy.high);
 
@@ -815,6 +842,29 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
             "longitud": posicion.longitude,
             "fecha_subida": now.toIso8601String(),
           });
+
+          // 🔹 Actualizar progreso
+          imagenesSubidasCount++;
+          Navigator.of(context).pop();
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return AlertDialog(
+                title: Text("Subiendo imágenes"),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LinearProgressIndicator(
+                        value: imagenesSubidasCount / totalImagenes),
+                    SizedBox(height: 10),
+                    Text(
+                        "$imagenesSubidasCount / $totalImagenes imágenes subidas"),
+                  ],
+                ),
+              );
+            },
+          );
         } catch (e) {
           Fluttertoast.showToast(
               msg: "Error al subir imagen: ${e.toString()}",
@@ -835,33 +885,61 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
       "cantidad_imagenes": imagenesSubidas.length,
     });
 
-    // 🔹 Limpiar caché de imágenes después de la subida exitosa
+    // 🔹 Limpiar caché de imágenes después de la subida
     for (var seccion in secciones) {
       seccion['imagenes'].clear();
     }
-    await _limpiarCacheImagenes();
+    await _limpiarImagenesEnCache();
 
-    Fluttertoast.showToast(
-        msg: "Contribución enviada exitosamente.",
-        backgroundColor: Colors.green);
+    // 🔹 Cerrar diálogo de carga
+    Navigator.of(context).pop();
 
-    // Redirigir al menú principal o splash_screen.dart
-    Navigator.pushReplacementNamed(context, "/menu");
+    // 🔹 Reproducir sonido de notificación
+    FlutterRingtonePlayer().playNotification();
+
+    // 🔹 Mostrar mensaje de agradecimiento
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Gracias por tu contribución"),
+          content: Text("Las imágenes han sido enviadas exitosamente."),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, "/menu");
+              },
+              child: Text("Aceptar"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
-  Future<void> _limpiarCacheImagenes() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    for (var seccion in secciones) {
-      String key =
-          "imagenes_${seccion['cultivo']}_${seccion['tipo']}_${seccion['estado']}_${seccion['enfermedad'] ?? 'ninguna'}";
-      await prefs.remove(key);
-    }
-
-    // 🔹 Eliminar imágenes de la carpeta local
-    final dir = await getApplicationDocumentsDirectory();
-    Directory cacheDir = Directory(dir.path);
-    if (cacheDir.existsSync()) {
-      cacheDir.deleteSync(recursive: true);
-    }
+// 🔹 Mostrar diálogo de confirmación antes de enviar
+  Future<bool> _mostrarDialogoConfirmacionEnvio() async {
+    return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text("Confirmar envío"),
+            content:
+                Text("¿Estás seguro de que deseas enviar la contribución?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text("Cancelar"),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                child: Text("Enviar", style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 }

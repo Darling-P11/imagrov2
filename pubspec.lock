@@ -354,10 +354,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_ringtone_player
-      sha256: "0b036416fda0654da52221989bd1a8ccd2876cea57f61ecc3a4fc272bd738c67"
+      sha256: d0277a04e629a6582d776f5dcc2a879a733f7326ba073b872a9ccfbff9d9b51f
       url: "https://pub.dev"
     source: hosted
-    version: "3.2.0"
+    version: "4.0.0+3"
   flutter_test:
     dependency: "direct dev"
     description: flutter
