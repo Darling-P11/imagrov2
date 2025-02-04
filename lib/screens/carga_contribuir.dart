@@ -6,6 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:imagro/screens/splash_screen.dart';
 
 class CargaContribuirScreen extends StatefulWidget {
   @override
@@ -22,7 +23,10 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
   @override
   void initState() {
     super.initState();
-    _cargarConfiguracion();
+    _cargarConfiguracion().then((_) {
+      _cargarImagenesDesdeAlmacenamiento(
+          secciones); // 🔹 Cargar imágenes almacenadas en caché después de la configuración
+    });
   }
 
   Future<void> _cargarConfiguracion() async {
@@ -92,6 +96,7 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     if (secciones[index]['imagenes'].length >= 100) {
+      _mostrarDialogoLimiteImagenes(); //AUN PRO PROBAAAAAR
       Fluttertoast.showToast(
         msg: "Has alcanzado el límite de 100 imágenes.",
         toastLength: Toast.LENGTH_SHORT,
@@ -99,62 +104,48 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
         backgroundColor: Colors.red,
         textColor: Colors.white,
       );
-      return; // No permitir más imágenes
+      return;
     }
+
+    List<File> nuevasImagenes = [];
 
     if (tipo == "gallery") {
       final List<XFile>? images = await _picker.pickMultiImage();
       if (images != null) {
-        List<File> nuevasImagenes = [];
-
         for (var img in images) {
           File savedImage =
               await File(img.path).copy('${dir.path}/${img.name}');
           nuevasImagenes.add(savedImage);
         }
-
-        secciones[index]['imagenes'].addAll(nuevasImagenes);
       }
     } else if (tipo == "camera") {
-      List<File> tempImages = [];
-      bool continuarCapturando = true;
-
-      while (continuarCapturando) {
-        final XFile? image =
-            await _picker.pickImage(source: ImageSource.camera);
-        if (image != null) {
-          File savedImage =
-              await File(image.path).copy('${dir.path}/${image.name}');
-          tempImages.add(savedImage);
-        } else {
-          continuarCapturando = false;
-        }
-
-        if (tempImages.length + secciones[index]['imagenes'].length >= 100) {
-          continuarCapturando = false; // Parar cuando se alcance el límite
-          Fluttertoast.showToast(
-            msg: "Has alcanzado el límite de 100 imágenes.",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-          );
-        }
-      }
-
-      if (tempImages.isNotEmpty) {
-        secciones[index]['imagenes'].addAll(tempImages);
+      final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+      if (image != null) {
+        File savedImage =
+            await File(image.path).copy('${dir.path}/${image.name}');
+        nuevasImagenes.add(savedImage);
       }
     }
 
-    // 🔹 Guardar en SharedPreferences para persistencia
-    String key =
-        "imagenes_${secciones[index]['cultivo']}_${secciones[index]['tipo']}_${secciones[index]['estado']}_${secciones[index]['enfermedad'] ?? 'ninguna'}";
-    List<String> rutas =
-        secciones[index]['imagenes'].map((file) => file.path).toList();
-    await prefs.setStringList(key, rutas);
+    if (nuevasImagenes.isNotEmpty) {
+      // 🔹 Evita agregar imágenes duplicadas
+      List<File> imagenesActuales = List.from(secciones[index]['imagenes']);
+      for (var img in nuevasImagenes) {
+        if (!imagenesActuales.any((file) => file.path == img.path)) {
+          imagenesActuales.add(img);
+        }
+      }
 
-    setState(() {});
+      secciones[index]['imagenes'] = imagenesActuales;
+
+      // 🔹 Guardar en SharedPreferences
+      String key =
+          "imagenes_${secciones[index]['cultivo']}_${secciones[index]['tipo']}_${secciones[index]['estado']}_${secciones[index]['enfermedad'] ?? 'ninguna'}";
+      List<String> rutas = imagenesActuales.map((file) => file.path).toList();
+      await prefs.setStringList(key, rutas);
+
+      setState(() {});
+    }
   }
 
   @override
@@ -419,15 +410,18 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
                             Image.file(datos['imagenes'][i], fit: BoxFit.cover),
                       ),
                     ),
-                    // 🔴 Botón de eliminar imagen
+                    // 🔴 Botón de eliminar imagen con actualización en caché
                     Positioned(
                       top: -6,
                       right: -6,
                       child: GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           setState(() {
                             datos['imagenes'].removeAt(i);
                           });
+
+                          // 🔹 Actualizar el caché después de eliminar
+                          await _actualizarImagenesEnCache(datos, index);
                         },
                         child: Container(
                           width: 20,
@@ -566,15 +560,204 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
     return (totalImagenes / totalPermitido) * 100; // Devuelve el porcentaje
   }
 
-// 🔴 Acción al presionar Cancelar
-  void _cancelarProceso() {
-    Fluttertoast.showToast(
-        msg: "Proceso cancelado", backgroundColor: Colors.red);
-  }
-
 // ✅ Acción al presionar Enviar
   void _enviarContribucion() {
     Fluttertoast.showToast(
         msg: "Enviando contribución...", backgroundColor: Colors.green);
   }
+
+  Future<void> _guardarImagenEnCache(File imagen, int index) async {
+    final dir = await getApplicationDocumentsDirectory();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Copia la imagen en la carpeta de documentos de la app
+    File nuevaImagen =
+        await imagen.copy('${dir.path}/${imagen.path.split('/').last}');
+
+    // Agregar la imagen a la sección correspondiente
+    setState(() {
+      secciones[index]['imagenes'].add(nuevaImagen);
+    });
+
+    // Guardar en SharedPreferences
+    String key =
+        "imagenes_${secciones[index]['cultivo']}_${secciones[index]['tipo']}_${secciones[index]['estado']}_${secciones[index]['enfermedad'] ?? 'ninguna'}";
+    List<String> rutas =
+        secciones[index]['imagenes'].map((file) => file.path).toList();
+    await prefs.setStringList(key, rutas);
+  }
+
+  Future<void> _cargarImagenesDesdeAlmacenamiento(
+      List<Map<String, dynamic>> seccionesTemp) async {
+    final dir = await getApplicationDocumentsDirectory();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    int imagenesRecuperadas = 0; // 🔹 Contador de imágenes recuperadas
+
+    for (var seccion in seccionesTemp) {
+      String key =
+          "imagenes_${seccion['cultivo']}_${seccion['tipo']}_${seccion['estado']}_${seccion['enfermedad'] ?? 'ninguna'}";
+      List<String>? rutasGuardadas = prefs.getStringList(key);
+
+      if (rutasGuardadas != null && rutasGuardadas.isNotEmpty) {
+        seccion['imagenes'] = rutasGuardadas.map((path) => File(path)).toList();
+        imagenesRecuperadas +=
+            rutasGuardadas.length; // 🔹 Contar imágenes restauradas
+      }
+    }
+
+    setState(() {
+      secciones = seccionesTemp;
+      cargando = false;
+    });
+
+    // 🔹 Mostrar mensaje si hay imágenes recuperadas
+    if (imagenesRecuperadas > 0) {
+      Fluttertoast.showToast(
+        msg: "Se recuperaron $imagenesRecuperadas imágenes desde caché",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.blue,
+        textColor: Colors.white,
+      );
+    }
+  }
+
+  void _mostrarDialogoLimiteImagenes() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Límite alcanzado"),
+        content: Text("No puedes subir más de 100 imágenes por sección."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Entendido"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _actualizarImagenesEnCache(
+      Map<String, dynamic> datos, int index) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String key =
+        "imagenes_${datos['cultivo']}_${datos['tipo']}_${datos['estado']}_${datos['enfermedad'] ?? 'ninguna'}";
+
+    // 🔹 Obtener la lista actualizada de imágenes sin la eliminada
+    List<String> rutas = datos['imagenes']
+        .map<String>((file) => file is File ? file.path : file.toString())
+        .toList();
+
+    // 🔹 Si la lista está vacía, eliminamos la clave del caché
+    if (rutas.isEmpty) {
+      await prefs.remove(key);
+    } else {
+      await prefs.setStringList(key, rutas);
+    }
+  }
+
+  Future<void> _cancelarProceso() async {
+    bool confirmar = await _mostrarDialogoConfirmacion();
+    if (!confirmar) return;
+
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    String userId = user.uid;
+
+    try {
+      // 🔹 Actualizar estado en Firestore
+      await FirebaseFirestore.instance
+          .collection('configuracionesUsuarios')
+          .doc(userId)
+          .update({'estado': 'cancelado'});
+
+      // 🔹 Eliminar imágenes del caché
+      await _limpiarImagenesEnCache();
+
+      // 🔹 Mostrar Toast de confirmación
+      Fluttertoast.showToast(
+        msg:
+            "Contribución cancelada. Se ha limpiado la caché y guardado en historial.",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+
+      // 🔹 Redirigir a SplashScreen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => SplashScreen()),
+      );
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: "Error al cancelar: ${e.toString()}",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+    }
+  }
+
+  Future<void> _limpiarImagenesEnCache() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final dir = await getApplicationDocumentsDirectory();
+
+    // 🔹 Obtener todas las claves de imágenes
+    Set<String> keys =
+        prefs.getKeys().where((key) => key.startsWith("imagenes_")).toSet();
+
+    for (String key in keys) {
+      List<String>? rutas = prefs.getStringList(key);
+      if (rutas != null) {
+        for (String path in rutas) {
+          File archivo = File(path);
+          if (await archivo.exists()) {
+            await archivo.delete(); // Eliminar archivo físico
+          }
+        }
+      }
+      await prefs.remove(key); // Eliminar la clave del cache
+    }
+  }
+
+  Future<bool> _mostrarDialogoConfirmacion() async {
+    return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Confirmar cancelación"),
+              content: Text(
+                  "¿Seguro que deseas cancelar? \nSe eliminarán las imágenes previamente guardadas y se guardará tu historial de cancelación."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false), // No cancelar
+                  child: Text("No, continuar"),
+                ),
+                ElevatedButton(
+                  onPressed: () =>
+                      Navigator.pop(context, true), // Confirmar cancelación
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                  ),
+                  child: Text(
+                    "Sí, cancelar",
+                    style: TextStyle(
+                        color: Colors.white), // 🔹 Color del texto en blanco
+                  ),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+  }
+
+  //CARGA DE IMAGENES 
+  
 }
