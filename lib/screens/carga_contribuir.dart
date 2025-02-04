@@ -7,6 +7,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:imagro/screens/splash_screen.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 
 class CargaContribuirScreen extends StatefulWidget {
   @override
@@ -560,12 +563,6 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
     return (totalImagenes / totalPermitido) * 100; // Devuelve el porcentaje
   }
 
-// ✅ Acción al presionar Enviar
-  void _enviarContribucion() {
-    Fluttertoast.showToast(
-        msg: "Enviando contribución...", backgroundColor: Colors.green);
-  }
-
   Future<void> _guardarImagenEnCache(File imagen, int index) async {
     final dir = await getApplicationDocumentsDirectory();
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -758,6 +755,113 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
         false;
   }
 
-  //CARGA DE IMAGENES 
-  
+  //CARGA DE IMAGENES
+  // ✅ Acción al presionar Enviar
+  Future<void> _enviarContribucion() async {
+    if (secciones.isEmpty) {
+      Fluttertoast.showToast(
+          msg: "No hay imágenes para enviar.", backgroundColor: Colors.red);
+      return;
+    }
+
+    Fluttertoast.showToast(
+        msg: "Iniciando subida de contribución...",
+        backgroundColor: Colors.green);
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      Fluttertoast.showToast(
+          msg: "Error: Usuario no autenticado.", backgroundColor: Colors.red);
+      return;
+    }
+
+    String userId = user.uid;
+    DateTime now = DateTime.now();
+    String anio = now.year.toString();
+    String mes = now.month.toString().padLeft(2, '0');
+    String contribucionId = FirebaseFirestore.instance
+        .collection('historialContribuciones')
+        .doc()
+        .id;
+
+    List<Map<String, dynamic>> imagenesSubidas = [];
+
+    for (var seccion in secciones) {
+      String cultivo = seccion['cultivo'];
+      String tipo = seccion['tipo'];
+      String estado = seccion['estado'];
+      String enfermedad = seccion['enfermedad'] ?? 'ninguna';
+
+      for (var imagen in List.from(seccion['imagenes'])) {
+        File file = File(imagen.path);
+        String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+        String rutaStorage =
+            "contribuciones/$anio/$mes/$cultivo/$tipo/$estado/$enfermedad/$timestamp.jpg";
+
+        try {
+          // 🔹 Subir imagen a Firebase Storage
+          UploadTask uploadTask =
+              FirebaseStorage.instance.ref(rutaStorage).putFile(file);
+          TaskSnapshot snapshot = await uploadTask;
+          String imageUrl = await snapshot.ref.getDownloadURL();
+
+          // 🔹 Obtener metadatos de ubicación (si están disponibles)
+          Position? posicion = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.high);
+
+          imagenesSubidas.add({
+            "url": imageUrl,
+            "latitud": posicion.latitude,
+            "longitud": posicion.longitude,
+            "fecha_subida": now.toIso8601String(),
+          });
+        } catch (e) {
+          Fluttertoast.showToast(
+              msg: "Error al subir imagen: ${e.toString()}",
+              backgroundColor: Colors.red);
+          return;
+        }
+      }
+    }
+
+    // 🔹 Guardar datos en Firestore
+    await FirebaseFirestore.instance
+        .collection("historialContribuciones")
+        .doc("$anio/$mes/$contribucionId")
+        .set({
+      "usuario": userId,
+      "fecha_contribucion": now.toIso8601String(),
+      "imagenes": imagenesSubidas,
+      "cantidad_imagenes": imagenesSubidas.length,
+    });
+
+    // 🔹 Limpiar caché de imágenes después de la subida exitosa
+    for (var seccion in secciones) {
+      seccion['imagenes'].clear();
+    }
+    await _limpiarCacheImagenes();
+
+    Fluttertoast.showToast(
+        msg: "Contribución enviada exitosamente.",
+        backgroundColor: Colors.green);
+
+    // Redirigir al menú principal o splash_screen.dart
+    Navigator.pushReplacementNamed(context, "/menu");
+  }
+
+  Future<void> _limpiarCacheImagenes() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    for (var seccion in secciones) {
+      String key =
+          "imagenes_${seccion['cultivo']}_${seccion['tipo']}_${seccion['estado']}_${seccion['enfermedad'] ?? 'ninguna'}";
+      await prefs.remove(key);
+    }
+
+    // 🔹 Eliminar imágenes de la carpeta local
+    final dir = await getApplicationDocumentsDirectory();
+    Directory cacheDir = Directory(dir.path);
+    if (cacheDir.existsSync()) {
+      cacheDir.deleteSync(recursive: true);
+    }
+  }
 }

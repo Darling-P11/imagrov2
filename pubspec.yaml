@@ -48,6 +48,7 @@ dependencies:
   path_provider: ^2.0.15  # Para obtener rutas de almacenamiento
   share_plus: ^7.0.2      # Para compartir archivos
   shared_preferences: ^2.2.0
+  flutter_ringtone_player: ^3.2.0
 
   
 
