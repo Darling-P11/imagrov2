@@ -656,50 +656,100 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
     }
   }
 
+  //PROCESO PARA CANCELAR EL PROCESO DE SUBIDA DE IMAGENES
   Future<void> _cancelarProceso() async {
     bool confirmar = await _mostrarDialogoConfirmacion();
     if (!confirmar) return;
 
     User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      Fluttertoast.showToast(
+          msg: "Error: Usuario no autenticado.", backgroundColor: Colors.red);
+      return;
+    }
 
     String userId = user.uid;
+    DateTime now = DateTime.now();
+
+    // ✅ Convertimos la fecha a un formato legible como el original
+    String fechaCancelacion =
+        "${now.day} de ${_obtenerNombreMes(now.month)} de ${now.year}, ${now.hour}:${now.minute}:${now.second} p.m. UTC-5";
 
     try {
-      // 🔹 Actualizar estado en Firestore
+      DocumentSnapshot configSnapshot = await FirebaseFirestore.instance
+          .collection('configuracionesUsuarios')
+          .doc(userId)
+          .get();
+
+      if (!configSnapshot.exists) {
+        Fluttertoast.showToast(
+            msg: "No hay configuración activa.", backgroundColor: Colors.red);
+        return;
+      }
+
+      Map<String, dynamic>? configData =
+          configSnapshot.data() as Map<String, dynamic>?;
+      if (configData == null) {
+        Fluttertoast.showToast(
+            msg: "Error al obtener configuración.",
+            backgroundColor: Colors.red);
+        return;
+      }
+
+      // ✅ Agregar estado y fecha de cancelación con formato corregido
+      configData['estado'] = 'cancelado';
+      configData['fecha_cancelacion'] = fechaCancelacion;
+
+      // ✅ Guardar en historialConfiguracion/{userId}/cancelados/{documento_único}
+      await FirebaseFirestore.instance
+          .collection('historialConfiguracion')
+          .doc(userId)
+          .collection('cancelados')
+          .add(configData);
+
+      // ✅ Eliminar la configuración original
       await FirebaseFirestore.instance
           .collection('configuracionesUsuarios')
           .doc(userId)
-          .update({'estado': 'cancelado'});
+          .delete();
 
-      // 🔹 Eliminar imágenes del caché
+      // ✅ Limpiar imágenes en caché
       await _limpiarImagenesEnCache();
 
-      // 🔹 Mostrar Toast de confirmación
+      // ✅ Mostrar confirmación
       Fluttertoast.showToast(
-        msg:
-            "Contribución cancelada. Se ha limpiado la caché y guardado en historial.",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
+          msg: "Contribución cancelada y registrada en historial.",
+          backgroundColor: Colors.green);
 
-      // 🔹 Redirigir a SplashScreen
+      // ✅ Redirigir a la pantalla principal
       Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => SplashScreen()),
-      );
+          context, MaterialPageRoute(builder: (context) => SplashScreen()));
     } catch (e) {
       Fluttertoast.showToast(
-        msg: "Error al cancelar: ${e.toString()}",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
+          msg: "Error al cancelar: ${e.toString()}",
+          backgroundColor: Colors.red);
     }
   }
+
+// 🔹 Función para obtener el nombre del mes
+  String _obtenerNombreMes(int mes) {
+    List<String> meses = [
+      "enero",
+      "febrero",
+      "marzo",
+      "abril",
+      "mayo",
+      "junio",
+      "julio",
+      "agosto",
+      "septiembre",
+      "octubre",
+      "noviembre",
+      "diciembre"
+    ];
+    return meses[mes - 1];
+  }
+  //FIN DE PROCESO
 
   Future<void> _limpiarImagenesEnCache() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -791,27 +841,44 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
     List<Map<String, dynamic>> imagenesSubidas = [];
     int totalImagenes = secciones.fold<int>(
         0, (sum, seccion) => sum + (seccion["imagenes"] as List).length);
-
     int imagenesSubidasCount = 0;
+
+    // 🔹 Guardar estado en Firestore para reanudar si la app se cierra
+    await FirebaseFirestore.instance
+        .collection('configuracionesUsuarios')
+        .doc(userId)
+        .update({
+      "estado": "subiendo",
+      "contribucion_id": contribucionId,
+      "fecha_inicio_envio": now.toIso8601String(),
+      "imagenes_pendientes": totalImagenes
+    });
 
     // 🔹 Mostrar diálogo de carga
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        return AlertDialog(
-          title: Text("Subiendo imágenes"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              LinearProgressIndicator(value: 0.0),
-              SizedBox(height: 10),
-              Text("0 / $totalImagenes imágenes subidas"),
-            ],
-          ),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text("Subiendo imágenes"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  LinearProgressIndicator(value: 0.0),
+                  SizedBox(height: 10),
+                  Text("0 / $totalImagenes imágenes subidas"),
+                ],
+              ),
+            );
+          },
         );
       },
     );
+
+    // ✅ SUBIDA CONCURRENTE DE IMÁGENES
+    List<Future<void>> tareasDeSubida = [];
 
     for (var seccion in secciones) {
       String cultivo = seccion['cultivo'];
@@ -823,69 +890,103 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
         File file = File(imagen.path);
         String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
         String rutaStorage =
-            "contribuciones/$anio/$mes/$cultivo/$tipo/$estado/$enfermedad/$timestamp.jpg";
+            "contribuciones_por_aprobar/$userId/$contribucionId/$timestamp.jpg";
 
-        try {
-          // 🔹 Subir imagen a Firebase Storage
-          UploadTask uploadTask =
-              FirebaseStorage.instance.ref(rutaStorage).putFile(file);
-          TaskSnapshot snapshot = await uploadTask;
-          String imageUrl = await snapshot.ref.getDownloadURL();
+        tareasDeSubida.add(() async {
+          int intentos = 0;
+          bool subidaExitosa = false;
 
-          // 🔹 Obtener ubicación (si está disponible)
-          Position? posicion = await Geolocator.getCurrentPosition(
-              desiredAccuracy: LocationAccuracy.high);
+          while (intentos < 3 && !subidaExitosa) {
+            try {
+              UploadTask uploadTask =
+                  FirebaseStorage.instance.ref(rutaStorage).putFile(file);
+              TaskSnapshot snapshot = await uploadTask;
+              String imageUrl = await snapshot.ref.getDownloadURL();
 
-          imagenesSubidas.add({
-            "url": imageUrl,
-            "latitud": posicion.latitude,
-            "longitud": posicion.longitude,
-            "fecha_subida": now.toIso8601String(),
-          });
+              Position? posicion = await Geolocator.getCurrentPosition(
+                  desiredAccuracy: LocationAccuracy.high);
 
-          // 🔹 Actualizar progreso
+              imagenesSubidas.add({
+                "url": imageUrl,
+                "latitud": posicion.latitude,
+                "longitud": posicion.longitude,
+                "fecha_subida": now.toIso8601String(),
+              });
+
+              subidaExitosa = true;
+            } catch (e) {
+              intentos++;
+              if (intentos >= 3) {
+                Fluttertoast.showToast(
+                    msg:
+                        "Error al subir imagen tras 3 intentos: ${e.toString()}",
+                    backgroundColor: Colors.red);
+              }
+            }
+          }
+
           imagenesSubidasCount++;
-          Navigator.of(context).pop();
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) {
-              return AlertDialog(
-                title: Text("Subiendo imágenes"),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    LinearProgressIndicator(
-                        value: imagenesSubidasCount / totalImagenes),
-                    SizedBox(height: 10),
-                    Text(
-                        "$imagenesSubidasCount / $totalImagenes imágenes subidas"),
-                  ],
-                ),
-              );
-            },
-          );
-        } catch (e) {
-          Fluttertoast.showToast(
-              msg: "Error al subir imagen: ${e.toString()}",
-              backgroundColor: Colors.red);
-          return;
-        }
+          _actualizarDialogoCarga(imagenesSubidasCount, totalImagenes);
+        }());
       }
     }
 
-    // 🔹 Guardar datos en Firestore
+    // 🔹 Esperar a que todas las imágenes se suban en paralelo
+    await Future.wait(tareasDeSubida);
+
+    // 🔹 Guardar configuración en historialConfiguracion
+    DocumentSnapshot configSnapshot = await FirebaseFirestore.instance
+        .collection('configuracionesUsuarios')
+        .doc(userId)
+        .get();
+
+    if (!configSnapshot.exists) {
+      Fluttertoast.showToast(
+          msg: "No hay configuración activa.", backgroundColor: Colors.red);
+      return;
+    }
+
+    Map<String, dynamic>? configData =
+        configSnapshot.data() as Map<String, dynamic>?;
+
+    if (configData == null) {
+      Fluttertoast.showToast(
+          msg: "Error al obtener configuración.", backgroundColor: Colors.red);
+      return;
+    }
+
+    // 🔹 Agregar datos adicionales
+    configData['estado'] = 'enviado';
+    configData['fecha_envio'] = now.toIso8601String();
+    configData['contribucion_id'] = contribucionId;
+
+    // 🔹 Guardar en historialConfiguracion/enviado
+    await FirebaseFirestore.instance
+        .collection('historialConfiguracion')
+        .doc(userId)
+        .collection('enviado')
+        .add(configData);
+
+    // 🔹 Guardar en historialContribuciones/enviado
     await FirebaseFirestore.instance
         .collection("historialContribuciones")
-        .doc("$anio/$mes/$contribucionId")
+        .doc(userId)
+        .collection("enviado")
+        .doc(contribucionId)
         .set({
       "usuario": userId,
+      "configuracion_id": contribucionId,
       "fecha_contribucion": now.toIso8601String(),
       "imagenes": imagenesSubidas,
       "cantidad_imagenes": imagenesSubidas.length,
     });
 
-    // 🔹 Limpiar caché de imágenes después de la subida
+    // 🔹 Eliminar configuración temporal del usuario
+    await FirebaseFirestore.instance
+        .collection('configuracionesUsuarios')
+        .doc(userId)
+        .delete();
+
     for (var seccion in secciones) {
       seccion['imagenes'].clear();
     }
@@ -894,7 +995,7 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
     // 🔹 Cerrar diálogo de carga
     Navigator.of(context).pop();
 
-    // 🔹 Reproducir sonido de notificación
+    // 🔔 Reproducir sonido de notificación
     FlutterRingtonePlayer().playNotification();
 
     // 🔹 Mostrar mensaje de agradecimiento
@@ -904,7 +1005,8 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
       builder: (context) {
         return AlertDialog(
           title: Text("Gracias por tu contribución"),
-          content: Text("Las imágenes han sido enviadas exitosamente."),
+          content: Text(
+              "Las imágenes han sido enviadas exitosamente y están en proceso de revisión."),
           actions: [
             ElevatedButton(
               onPressed: () {
@@ -917,6 +1019,35 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
         );
       },
     );
+  }
+
+  void _actualizarDialogoCarga(int imagenesSubidas, int totalImagenes) {
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: Text("Subiendo imágenes"),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LinearProgressIndicator(
+                        value: totalImagenes == 0
+                            ? 0
+                            : imagenesSubidas / totalImagenes),
+                    SizedBox(height: 10),
+                    Text("$imagenesSubidas / $totalImagenes imágenes subidas"),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      );
+    }
   }
 
 // 🔹 Mostrar diálogo de confirmación antes de enviar
