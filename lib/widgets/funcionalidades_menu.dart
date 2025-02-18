@@ -29,7 +29,9 @@ class FunctionalitiesWidget extends StatelessWidget {
           _buildModuleCard(
             image: 'assets/icons/solicitudes.png',
             title: 'Solicitudes enviadas',
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, '/historial_solicitud');
+            },
           ),
           _buildModuleCard(
             image: 'assets/icons/estadisticas.png',

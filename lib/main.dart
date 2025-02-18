@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:imagro/screens/historial_solicitud.dart';
 import 'package:imagro/screens/menu_screen.dart';
 import 'package:imagro/screens/profile_register_screen.dart';
 import 'package:imagro/screens/splash_screen.dart';
@@ -48,6 +49,7 @@ class MyApp extends StatelessWidget {
         '/configuracion-contribucion': (context) =>
             ConfiguracionContribucionScreen(),
         '/carga-contribucion': (context) => CargaContribuirScreen(),
+        '/historial_solicitud': (context) => HistorialSolicitudScreen(),
       },
     );
   }
