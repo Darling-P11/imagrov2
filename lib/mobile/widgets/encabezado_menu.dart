@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:imagro/widgets/submenu_encabezado.dart';
+import 'package:imagro/mobile/widgets/submenu_encabezado.dart';
 
 class HeaderWidget extends StatelessWidget {
   final User? user;

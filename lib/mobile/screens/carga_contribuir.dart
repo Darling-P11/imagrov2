@@ -6,7 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:imagro/screens/splash_screen.dart';
+import 'package:imagro/mobile/screens/splash_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';

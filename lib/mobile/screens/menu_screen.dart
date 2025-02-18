@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:imagro/widgets/encabezado_menu.dart';
-import 'package:imagro/widgets/funcionalidades_menu.dart';
-import 'package:imagro/widgets/flotante_pie_menu.dart';
+import 'package:imagro/mobile/widgets/encabezado_menu.dart';
+import 'package:imagro/mobile/widgets/funcionalidades_menu.dart';
+import 'package:imagro/mobile/widgets/flotante_pie_menu.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
