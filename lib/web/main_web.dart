@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:imagro/web/router.dart';
+import 'package:imagro/web/utils/router.dart';
 
 void main() {
-  runApp(const ImagroWebApp());
+  runApp(const MyApp());
 }
 
-class ImagroWebApp extends StatelessWidget {
-  const ImagroWebApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Imagro Web',
-      routerConfig: WebRouter,  // Aquí debe estar bien referenciado
+      theme: ThemeData(primarySwatch: Colors.blue),
+      routerConfig: appRouter, // 👈 Aquí se conecta el router
     );
   }
 }

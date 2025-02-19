@@ -1,65 +1,48 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import '../utils/responsiveLayout.dart';
 
-class Navbar extends StatelessWidget implements PreferredSizeWidget {
+class NavBar extends StatelessWidget {
+  final List<String> navLinks = ["Home", "Products", "Features", "Contact"];
+
+  List<Widget> navItem() {
+    return navLinks.map((text) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 20),
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+        ),
+      );
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.green.shade800,
-      title: Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: () => context.go('/'),
-            child: Row(
-              children: [
-                Icon(Icons.eco, color: Colors.white),
-                SizedBox(width: 8),
-                Text(
-                  "Imagro",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+        children: <Widget>[
+          Image.asset("assets/logo.png", width: 50),
+          if (!ResponsiveLayout.isSmallScreen(context))
+            Row(
+              children: <Widget>[
+                ...navItem(),
+                const SizedBox(width: 20),
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey.shade200,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
+                  child: const Text("Sign In", style: TextStyle(color: Colors.black87, fontSize: 16)),
                 ),
               ],
-            ),
-          ),
-          Row(
-            children: [
-              _navItem(context, "Inicio", "/"),
-              _navItem(context, "Contribuir", "/contribute"),
-              _navItem(context, "Mapa", "/map"),
-              SizedBox(width: 16),
-              ElevatedButton(
-                onPressed: () => context.go('/login'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.green.shade800,
-                ),
-                child: Text("Iniciar sesión"),
-              ),
-            ],
-          ),
+            )
+          else
+            const Icon(Icons.menu, size: 28, color: Colors.black),
         ],
       ),
     );
   }
-
-  Widget _navItem(BuildContext context, String text, String route) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 8),
-      child: GestureDetector(
-        onTap: () => context.go(route),
-        child: Text(
-          text,
-          style: TextStyle(color: Colors.white, fontSize: 16),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Size get preferredSize => Size.fromHeight(60);
 }

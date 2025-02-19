@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:imagro/web/screens/home_web.dart';
-import 'package:imagro/web/screens/login_web.dart';
-import 'package:imagro/web/screens/dashboard_web.dart';
+import '../screens/home.dart';
+import '../screens/login_web.dart';
+import '../screens/dashboard_web.dart';
 
-final GoRouter WebRouter = GoRouter(
+final GoRouter appRouter = GoRouter(
+  initialLocation: '/', // Página inicial
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => const HomeWebScreen(),
+      name: 'home',
+      builder: (context, state) => HomePage(),
     ),
     GoRoute(
       path: '/login',
+      name: 'login',
       builder: (context, state) => const LoginWebScreen(),
     ),
     GoRoute(
       path: '/dashboard',
+      name: 'dashboard',
       builder: (context, state) => const DashboardWebScreen(),
     ),
   ],
