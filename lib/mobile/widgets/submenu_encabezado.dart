@@ -6,7 +6,8 @@ class ProfileDropdownMenu extends StatelessWidget {
   final String? userImage;
   final String? userName;
 
-  const ProfileDropdownMenu({super.key, this.user, this.userImage, this.userName});
+  const ProfileDropdownMenu(
+      {super.key, this.user, this.userImage, this.userName});
 
   @override
   Widget build(BuildContext context) {
@@ -77,22 +78,21 @@ class ProfileDropdownMenu extends StatelessWidget {
             ),
           ),
         ),
-        PopupMenuItem(
-          value: 2,
-          child: ListTile(
-            leading: Icon(Icons.settings, color: Colors.black87),
-            title: Text(
-              'Ajustes',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-          ),
-        ),
+        // PopupMenuItem(
+        //   value: 2,
+        //   child: ListTile(
+        ////    title: Text(
+        //      'Ajustes',
+        //      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        //    ),
+//),
+        // ),
         PopupMenuItem(
           value: 3,
           child: ListTile(
             leading: Icon(Icons.help_outline, color: Colors.black87),
             title: Text(
-              'Ayuda',
+              'Tutorial',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
           ),

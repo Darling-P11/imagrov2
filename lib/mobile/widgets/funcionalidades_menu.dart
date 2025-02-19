@@ -5,38 +5,51 @@ class FunctionalitiesWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GridView.count(
-        shrinkWrap: true,
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        physics: NeverScrollableScrollPhysics(),
+    return Center(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _buildModuleCard(
-            image: 'assets/icons/contribuir.png',
-            title: 'Comenzar a contribuir',
-            onTap: () {
-              Navigator.pushNamed(context, '/configuracion-contribucion');
-            },
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 13),
+            child: Container(
+              padding: const EdgeInsets.all(13),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Funcionalidades',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
-          _buildModuleCard(
-            image: 'assets/icons/fotografias.png',
-            title: 'Mis Fotografías',
-            onTap: () {},
-          ),
-          _buildModuleCard(
-            image: 'assets/icons/solicitudes.png',
-            title: 'Solicitudes enviadas',
-            onTap: () {
-              Navigator.pushNamed(context, '/historial_solicitud');
-            },
-          ),
-          _buildModuleCard(
-            image: 'assets/icons/estadisticas.png',
-            title: 'Mis Estadísticas',
-            onTap: () {},
+          const SizedBox(height: 25),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                _buildModuleCard(
+                  image: 'assets/icons/contribuir.png',
+                  title: 'Comenzar a contribuir',
+                  onTap: () {
+                    Navigator.pushNamed(context, '/configuracion-contribucion');
+                  },
+                ),
+                const SizedBox(height: 30),
+                _buildModuleCard(
+                  image: 'assets/icons/solicitudes.png',
+                  title: 'Solicitudes enviadas',
+                  onTap: () {
+                    Navigator.pushNamed(context, '/historial_solicitud');
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -51,56 +64,59 @@ class FunctionalitiesWidget extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(12),
+        height: 120,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.shade200,
+              color: Colors.grey.shade300,
               blurRadius: 6,
               spreadRadius: 2,
             ),
           ],
         ),
-        child: Stack(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Flecha en la parte superior derecha
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Icon(
-                Icons.arrow_forward,
-                color: Colors.grey,
-                size: 20,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Image.asset(
+                    image,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
               ),
             ),
-            // Icono más cercano al título
-            Positioned(
-              top: 35,
-              left: 12,
-              child: Image.asset(
-                image,
-                width: 40,
-                height: 40,
-                fit: BoxFit.contain,
-              ),
-            ),
-            // Título alineado a la izquierda
-            Positioned(
-              bottom: 15,
-              left: 12,
-              right: 12,
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+            Container(
+              width: 50,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade400,
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                softWrap: true,
+              ),
+              child: const Center(
+                child: Icon(
+                  Icons.arrow_forward,
+                  color: Colors.black87,
+                  size: 20,
+                ),
               ),
             ),
           ],

@@ -91,6 +91,7 @@ flutter:
     - assets/icons/solicitudes.png
     - assets/icons/estadisticas.png
     - assets/images/logo_banner.png
+    - assets/images/logo_banner_verde.png
 
 flutter_icons:
   android: true

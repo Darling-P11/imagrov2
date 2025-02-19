@@ -66,7 +66,7 @@ class _MenuScreenState extends State<MenuScreen> {
           ],
         ),
       ),
-      //floatingActionButton: FooterWidget(), PROXIMO
+      floatingActionButton: FooterWidget(),
     );
   }
 }
