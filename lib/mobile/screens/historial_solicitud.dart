@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 class HistorialSolicitudScreen extends StatefulWidget {
   @override
@@ -78,9 +79,10 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
               alignment: WrapAlignment.center,
               children: [
                 _buildFiltroBoton("General", Colors.black),
+                _buildFiltroBoton("Enviado", Colors.yellow[700]!),
                 _buildFiltroBoton("Aprobado", Colors.green),
                 _buildFiltroBoton("Denegado", Colors.red),
-                _buildFiltroBoton("Pendiente", Colors.yellow[700]!),
+                _buildFiltroBoton("Cancelado", Colors.orange),
               ],
             ),
           ),
@@ -138,24 +140,63 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
 
         List<DocumentSnapshot> solicitudes = snapshot.data!.docs;
 
-        if (filtroEstado != "General") {
-          solicitudes = solicitudes
-              .where((doc) =>
-                  doc["estado"] == filtroEstado ||
-                  (filtroEstado == "Pendiente" && doc["estado"] == "enviado"))
-              .toList();
-        }
+        return FutureBuilder<List<Map<String, dynamic>>>(
+          future: _obtenerSolicitudesConEstado(userId, solicitudes),
+          builder: (context, solicitudesSnapshot) {
+            if (!solicitudesSnapshot.hasData ||
+                solicitudesSnapshot.data!.isEmpty) {
+              return Center(child: Text("No hay solicitudes registradas"));
+            }
 
-        return ListView.builder(
-          padding: EdgeInsets.symmetric(horizontal: 10),
-          itemCount: solicitudes.length,
-          itemBuilder: (context, index) {
-            var solicitud = solicitudes[index].data() as Map<String, dynamic>;
-            return _buildTarjetaSolicitud(solicitud);
+            List<Map<String, dynamic>> solicitudesConEstado =
+                solicitudesSnapshot.data!;
+
+            if (filtroEstado != "General") {
+              solicitudesConEstado = solicitudesConEstado
+                  .where((solicitud) => solicitud["estado"] == filtroEstado)
+                  .toList();
+            }
+
+            return ListView.builder(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              itemCount: solicitudesConEstado.length,
+              itemBuilder: (context, index) {
+                var solicitud = solicitudesConEstado[index];
+                return _buildTarjetaSolicitud(solicitud);
+              },
+            );
           },
         );
       },
     );
+  }
+
+  Future<List<Map<String, dynamic>>> _obtenerSolicitudesConEstado(
+      String userId, List<DocumentSnapshot> solicitudes) async {
+    List<Map<String, dynamic>> solicitudesConEstado = [];
+
+    for (var solicitudDoc in solicitudes) {
+      var solicitudData = solicitudDoc.data() as Map<String, dynamic>;
+      String configId = solicitudData["configuracion_id"];
+
+      DocumentSnapshot configDoc = await FirebaseFirestore.instance
+          .collection("historialConfiguracion")
+          .doc(userId)
+          .collection("enviado")
+          .doc(configId)
+          .get();
+
+      String estado = "Enviado";
+      if (configDoc.exists) {
+        var configData = configDoc.data() as Map<String, dynamic>;
+        estado = configData["estado"] ?? "Enviado";
+      }
+
+      solicitudData["estado"] = estado;
+      solicitudesConEstado.add(solicitudData);
+    }
+
+    return solicitudesConEstado;
   }
 
   Widget _buildTarjetaSolicitud(Map<String, dynamic> solicitud) {
@@ -167,22 +208,39 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
       case "Denegado":
         estadoColor = Colors.red;
         break;
-      case "enviado":
-        estadoColor = Colors.yellow[700]!;
+      case "Cancelado":
+        estadoColor = Colors.orange;
         break;
+      case "Enviado":
       default:
-        estadoColor = Colors.grey;
+        estadoColor = Colors.yellow[700]!;
     }
+
+    String fechaFormateada = _formatearFecha(solicitud['fecha_contribucion']);
 
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: estadoColor,
-          child: Icon(Icons.image, color: Colors.white),
+        onTap: () {
+          _mostrarDetallesSolicitud(solicitud);
+        },
+        leading: Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: estadoColor,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(8),
+            child: Image.asset(
+              'assets/images/logo.png',
+              fit: BoxFit.contain,
+            ),
+          ),
         ),
         title: Text(
-          "Fecha de envío: ${solicitud['fecha_contribucion']}",
+          "Fecha de envío: $fechaFormateada",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         subtitle: Column(
@@ -195,6 +253,52 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
         ),
         trailing: Icon(Icons.search, color: Colors.grey),
       ),
+    );
+  }
+
+  String _formatearFecha(String fechaContribucion) {
+    try {
+      DateTime fecha = DateTime.parse(fechaContribucion);
+      return DateFormat('dd/MM/yyyy').format(fecha);
+    } catch (e) {
+      return "Fecha no disponible";
+    }
+  }
+
+  void _mostrarDetallesSolicitud(Map<String, dynamic> solicitud) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Detalles de la solicitud"),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: [
+                Text(
+                    "📅 Fecha de envío: ${_formatearFecha(solicitud['fecha_contribucion'])}"),
+                SizedBox(height: 5),
+                Text("📸 Total de imágenes: ${solicitud['cantidad_imagenes']}"),
+                SizedBox(height: 5),
+                Text("📝 Estado: ${solicitud['estado'] ?? 'Enviado'}"),
+                SizedBox(height: 5),
+                Text(
+                    "📍 Ubicación: ${solicitud['ubicacion'] ?? 'No registrada'}"),
+                SizedBox(height: 5),
+                Text(
+                    "🔗 ID de Configuración: ${solicitud['configuracion_id']}"),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text("Cerrar"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
