@@ -10,6 +10,7 @@ import 'package:imagro/mobile/screens/splash_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'package:geocoding/geocoding.dart';
 
 class CargaContribuirScreen extends StatefulWidget {
   @override
@@ -805,8 +806,47 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
         false;
   }
 
+  //OBTENER LA UBICACION DEL USUARIO
+  Future<Map<String, dynamic>> _obtenerUbicacionGeneral() async {
+    try {
+      Position posicion = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        posicion.latitude,
+        posicion.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark lugar = placemarks.first;
+        String direccion =
+            "${lugar.locality}, ${lugar.administrativeArea}, ${lugar.country}";
+
+        return {
+          "direccion": direccion,
+          "latitud": posicion.latitude,
+          "longitud": posicion.longitude
+        };
+      } else {
+        return {
+          "direccion": "Ubicación no disponible",
+          "latitud": posicion.latitude,
+          "longitud": posicion.longitude
+        };
+      }
+    } catch (e) {
+      print("Error obteniendo la ubicación: $e");
+      return {
+        "direccion": "Ubicación no disponible",
+        "latitud": 0.0,
+        "longitud": 0.0
+      };
+    }
+  }
+
   //CARGA DE IMAGENES
-  // ✅ Acción al presionar Enviar
+  // ✅ Acción al presionar Enviar con ubicación general incluida
   Future<void> _enviarContribucion() async {
     if (secciones.isEmpty) {
       Fluttertoast.showToast(
@@ -814,7 +854,9 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
       return;
     }
 
-    // 🔹 Confirmación antes de enviar
+    // ✅ Obtener la ubicación general
+    Map<String, dynamic> ubicacionGeneral = await _obtenerUbicacionGeneral();
+
     bool confirmar = await _mostrarDialogoConfirmacionEnvio();
     if (!confirmar) return;
 
@@ -831,8 +873,6 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
 
     String userId = user.uid;
     DateTime now = DateTime.now();
-    String anio = now.year.toString();
-    String mes = now.month.toString().padLeft(2, '0');
     String contribucionId = FirebaseFirestore.instance
         .collection('historialContribuciones')
         .doc()
@@ -879,7 +919,7 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
 
     // ✅ SUBIDA CONCURRENTE DE IMÁGENES
     List<Future<void>> tareasDeSubida = [];
-
+    //CARGA DE IMAGENES AL FIRESTORAGE
     for (var seccion in secciones) {
       String cultivo = seccion['cultivo'];
       String tipo = seccion['tipo'];
@@ -889,8 +929,10 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
       for (var imagen in List.from(seccion['imagenes'])) {
         File file = File(imagen.path);
         String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+
+        // ✅ Definir el path organizado según la configuración
         String rutaStorage =
-            "contribuciones_por_aprobar/$userId/$contribucionId/$timestamp.jpg";
+            "contribuciones_por_aprobar/$userId/$contribucionId/$cultivo/$tipo/$estado/$enfermedad/$timestamp.jpg";
 
         tareasDeSubida.add(() async {
           int intentos = 0;
@@ -903,13 +945,14 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
               TaskSnapshot snapshot = await uploadTask;
               String imageUrl = await snapshot.ref.getDownloadURL();
 
-              Position? posicion = await Geolocator.getCurrentPosition(
-                  desiredAccuracy: LocationAccuracy.high);
-
               imagenesSubidas.add({
                 "url": imageUrl,
-                "latitud": posicion.latitude,
-                "longitud": posicion.longitude,
+                "cultivo": cultivo,
+                "tipo": tipo,
+                "estado": estado,
+                "enfermedad": enfermedad,
+                "latitud": ubicacionGeneral["latitud"],
+                "longitud": ubicacionGeneral["longitud"],
                 "fecha_subida": now.toIso8601String(),
               });
 
@@ -967,7 +1010,7 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
         .collection('enviado')
         .add(configData);
 
-    // 🔹 Guardar en historialContribuciones/enviado
+    // 🔹 Guardar en historialContribuciones/enviado con ubicación general
     await FirebaseFirestore.instance
         .collection("historialContribuciones")
         .doc(userId)
@@ -977,6 +1020,7 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
       "usuario": userId,
       "configuracion_id": contribucionId,
       "fecha_contribucion": now.toIso8601String(),
+      "ubicacion": ubicacionGeneral, // ✅ Ubicación general incluida
       "imagenes": imagenesSubidas,
       "cantidad_imagenes": imagenesSubidas.length,
     });
@@ -1006,7 +1050,7 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
         return AlertDialog(
           title: Text("Gracias por tu contribución"),
           content: Text(
-              "Las imágenes han sido enviadas exitosamente y están en proceso de revisión."),
+              "Las imágenes han sido enviadas exitosamente con la ubicación registrada y están en proceso de revisión."),
           actions: [
             ElevatedButton(
               onPressed: () {

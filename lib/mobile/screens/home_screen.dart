@@ -23,10 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      // Desconecta cualquier cuenta previamente seleccionada
-      await googleSignIn.disconnect();
-
-      // Fuerza la selección de cuenta
+      // 🔹 Iniciar sesión con Google sin hacer "disconnect"
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {
@@ -43,33 +40,32 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       }
 
-      // Obtén la autenticación de Google
+      // 🔹 Obtener autenticación de Google
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      // Crea una credencial para Firebase
+      // 🔹 Crear credencial para Firebase
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Inicia sesión en Firebase
+      // 🔹 Iniciar sesión en Firebase
       final UserCredential userCredential =
           await auth.signInWithCredential(credential);
-
       final User? user = userCredential.user;
 
       if (user != null) {
         final userId = user.uid;
 
-        // Verifica si el usuario ya está registrado en Firestore
+        // 🔹 Verificar si el usuario ya está en Firestore
         final userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(userId)
             .get();
 
         if (!userDoc.exists) {
-          // Si el usuario no está registrado, guárdalo en Firestore
+          // 🔹 Guardar usuario en Firestore si no existe
           await FirebaseFirestore.instance.collection('users').doc(userId).set({
             'name': user.displayName,
             'email': user.email,
@@ -96,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        // Redirige al usuario a la pantalla principal
+        // 🔹 Redirigir al usuario al menú principal
         Navigator.pushReplacementNamed(context, '/menu');
       }
     } catch (e) {
