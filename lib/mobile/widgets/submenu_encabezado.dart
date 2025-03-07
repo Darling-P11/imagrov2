@@ -6,8 +6,12 @@ class ProfileDropdownMenu extends StatelessWidget {
   final String? userImage;
   final String? userName;
 
-  const ProfileDropdownMenu(
-      {super.key, this.user, this.userImage, this.userName});
+  const ProfileDropdownMenu({
+    super.key,
+    this.user,
+    this.userImage,
+    this.userName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -39,26 +43,37 @@ class ProfileDropdownMenu extends StatelessWidget {
                               as ImageProvider,
                     ),
                     SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          userName ?? 'Usuario',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Colors.black87,
+                    Expanded(
+                      // ✅ Evita desbordamientos
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            userName ?? 'Usuario',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize:
+                                  (userName != null && userName!.length > 20)
+                                      ? 14
+                                      : 16, // 🔹 Reduce tamaño si es largo
+                              color: Colors.black87,
+                            ),
+                            maxLines: 1, // 🔹 Evita que se desborde
+                            overflow: TextOverflow
+                                .ellipsis, // 🔹 Agrega "..." si es muy largo
                           ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          user?.email ?? 'Correo no disponible',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
+                          SizedBox(height: 4),
+                          Text(
+                            user?.email ?? 'Correo no disponible',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                            maxLines: 1, // 🔹 Evita solapamientos
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -78,15 +93,6 @@ class ProfileDropdownMenu extends StatelessWidget {
             ),
           ),
         ),
-        // PopupMenuItem(
-        //   value: 2,
-        //   child: ListTile(
-        ////    title: Text(
-        //      'Ajustes',
-        //      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-        //    ),
-//),
-        // ),
         PopupMenuItem(
           value: 3,
           child: ListTile(

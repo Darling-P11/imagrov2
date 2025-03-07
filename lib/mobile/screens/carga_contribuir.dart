@@ -99,10 +99,10 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
     final dir = await getApplicationDocumentsDirectory();
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    if (secciones[index]['imagenes'].length >= 100) {
+    if (secciones[index]['imagenes'].length >= 10) {
       _mostrarDialogoLimiteImagenes(); //AUN PRO PROBAAAAAR
       Fluttertoast.showToast(
-        msg: "Has alcanzado el límite de 100 imágenes.",
+        msg: "Has alcanzado el límite de 10 imágenes.",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
         backgroundColor: Colors.red,
@@ -306,19 +306,33 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
                         color: const Color.fromARGB(255, 0, 0, 0),
                       ),
                       SizedBox(width: 5),
-                      Text(
-                        titulo,
-                        style: TextStyle(
-                            fontSize: 14,
-                            color: const Color.fromARGB(255, 0, 0, 0)),
+                      // 🔹 Texto adaptable: Reduce tamaño o se hace multilinea si es largo
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width *
+                            0.5, // 🔹 Limita el ancho del texto
+                        child: Text(
+                          titulo,
+                          style: TextStyle(
+                            fontSize: titulo.length > 40
+                                ? 12
+                                : 14, // 🔹 Reduce tamaño si es largo
+                            color: const Color.fromARGB(255, 0, 0, 0),
+                          ),
+                          maxLines: 2, // 🔹 Permite hasta 2 líneas
+                          overflow: TextOverflow
+                              .ellipsis, // 🔹 Agrega "..." si es muy largo
+                          softWrap:
+                              true, // 🔹 Permite que el texto se divida en líneas
+                        ),
                       ),
                     ],
                   ),
                   Text(
-                    "${datos['imagenes'].length}/100",
+                    "${datos['imagenes'].length}/10",
                     style: TextStyle(
-                        fontSize: 14,
-                        color: const Color.fromARGB(255, 145, 144, 144)),
+                      fontSize: 14,
+                      color: const Color.fromARGB(255, 145, 144, 144),
+                    ),
                   ),
                 ],
               ),
@@ -555,7 +569,7 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
 // 🔹 Cálculo del progreso total basado en imágenes cargadas
   double _calcularProgreso() {
     int totalImagenes = 0;
-    int totalPermitido = secciones.length * 100; // 100 imágenes por sección
+    int totalPermitido = secciones.length * 10; // 10 imágenes por sección
 
     for (var seccion in secciones) {
       totalImagenes += (seccion['imagenes'] as List).length;

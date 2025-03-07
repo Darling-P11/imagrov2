@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:imagro/mobile/widgets/submenu_encabezado.dart';
+import 'package:url_launcher/url_launcher.dart'; // ✅ Importar url_launcher
 
 class HeaderWidget extends StatelessWidget {
   final User? user;
@@ -107,12 +108,7 @@ class HeaderWidget extends StatelessWidget {
                               ),
                             ),
                             OutlinedButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(SnackBar(
-                                  content: Text('Redirigiendo al sitio web...'),
-                                ));
-                              },
+                              onPressed: () => _abrirWebsite(), // ✅ Redirigir
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(color: Colors.white),
                                 backgroundColor: Colors.white,
@@ -166,6 +162,16 @@ class HeaderWidget extends StatelessWidget {
         );
       },
     );
+  }
+
+  // ✅ Función para abrir el sitio web
+  void _abrirWebsite() async {
+    final Uri url = Uri.parse('imagro-b9269.web.app');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      throw 'No se pudo abrir $url';
+    }
   }
 
   Future<int> _getTotalContributions() async {

@@ -78,11 +78,11 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
               runSpacing: 8,
               alignment: WrapAlignment.center,
               children: [
-                _buildFiltroBoton("General", Colors.black),
-                _buildFiltroBoton("Enviado", Colors.yellow[700]!),
-                _buildFiltroBoton("Aprobado", Colors.green),
-                _buildFiltroBoton("Denegado", Colors.red),
-                _buildFiltroBoton("Cancelado", Colors.orange),
+                _buildFiltroBoton("Enviado", Colors.blue),
+                _buildFiltroBoton("Aceptado", Colors.green),
+                _buildFiltroBoton("Rechazado", Colors.red),
+                _buildFiltroBoton(
+                    "Cancelado", Colors.orange), // Naranja para cancelado
               ],
             ),
           ),
@@ -122,12 +122,14 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
       return Center(child: Text("Usuario no autenticado"));
     }
     String userId = user.uid;
-
+    String collectionName =
+        filtroEstado.toLowerCase(); // Convertimos a minúsculas
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection("historialContribuciones")
           .doc(userId)
-          .collection("enviado")
+          .collection(
+              collectionName) // ← Ahora seleccionamos la subcolección correcta
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -135,7 +137,7 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text("No hay solicitudes registradas"));
+          return Center(child: Text("SELECCIONA UN ESTADO DE LA BÚSQUEDA"));
         }
 
         List<DocumentSnapshot> solicitudes = snapshot.data!.docs;
@@ -192,7 +194,7 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
         estado = configData["estado"] ?? "Enviado";
       }
 
-      solicitudData["estado"] = estado;
+      solicitudData["estado"] = filtroEstado;
       solicitudesConEstado.add(solicitudData);
     }
 
@@ -202,10 +204,10 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
   Widget _buildTarjetaSolicitud(Map<String, dynamic> solicitud) {
     Color estadoColor;
     switch (solicitud["estado"]) {
-      case "Aprobado":
+      case "Aceptado":
         estadoColor = Colors.green;
         break;
-      case "Denegado":
+      case "Rechazado":
         estadoColor = Colors.red;
         break;
       case "Cancelado":
@@ -213,7 +215,7 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
         break;
       case "Enviado":
       default:
-        estadoColor = Colors.yellow[700]!;
+        estadoColor = Colors.blue;
     }
 
     String fechaFormateada = _formatearFecha(solicitud['fecha_contribucion']);
