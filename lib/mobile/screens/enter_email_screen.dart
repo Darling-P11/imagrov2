@@ -91,9 +91,10 @@ class _EnterEmailScreenState extends State<EnterEmailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: BackButton(color: Colors.black),
-        backgroundColor: Colors.white,
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         elevation: 0,
       ),
       body: Stack(
@@ -118,7 +119,7 @@ class _EnterEmailScreenState extends State<EnterEmailScreen> {
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                      color: const Color(0xFF0BA37F),
                     ),
                   ),
                   SizedBox(height: 20),
@@ -126,7 +127,8 @@ class _EnterEmailScreenState extends State<EnterEmailScreen> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.email, color: Colors.green),
+                      prefixIcon:
+                          Icon(Icons.email, color: const Color(0xFF0BA37F)),
                       hintText: 'example@example.com',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -155,7 +157,7 @@ class _EnterEmailScreenState extends State<EnterEmailScreen> {
                     child: ElevatedButton(
                       onPressed: _checkEmail,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: const Color(0xFF0BA37F),
                         shape: CircleBorder(),
                         padding: EdgeInsets.all(16),
                       ),
@@ -171,7 +173,8 @@ class _EnterEmailScreenState extends State<EnterEmailScreen> {
               color: Colors.black54, // Fondo semitransparente
               child: Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(const Color(0xFF0BA37F)),
                   strokeWidth: 6,
                 ),
               ),

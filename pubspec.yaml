@@ -43,7 +43,7 @@ dependencies:
   google_sign_in: ^5.4.0
   flutter_launcher_icons: ^0.13.1
   intl: ^0.18.0
-  url_launcher: ^6.1.7
+  url_launcher: ^6.1.14
   permission_handler: ^11.3.1
   path_provider: ^2.0.15  # Para obtener rutas de almacenamiento
   share_plus: ^7.0.2      # Para compartir archivos

@@ -138,8 +138,10 @@ class _ConfiguracionContribucionScreenState
   }
 
   Widget _buildProgressIndicator() {
-    int totalSteps = 5; // Número total de pasos
-    double progress = (_currentStep + 1) / totalSteps; // Cálculo del progreso
+    int totalSteps =
+        _calcularTotalPasos(); // Llamada a la función que ajusta dinámicamente los pasos
+    double progress =
+        (_currentStep + 1) / totalSteps; // Cálculo del progreso real
 
     return Column(
       children: [
@@ -157,27 +159,45 @@ class _ConfiguracionContribucionScreenState
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              // 🔹 Barra de progreso dinámica (Cambia de rojo a verde)
+              // 🔹 Barra de progreso dinámica (de rojo a verde según el avance)
               AnimatedContainer(
                 duration: Duration(milliseconds: 300),
                 height: 8,
                 width: MediaQuery.of(context).size.width * progress,
                 decoration: BoxDecoration(
-                  color: Color.lerp(Colors.red, Colors.green,
-                      progress), // Cambio de color dinámico
+                  color: Color.lerp(Colors.red, Colors.green, progress),
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
             ],
           ),
         ),
-        SizedBox(height: 5), // Espacio entre la barra y el texto
+        SizedBox(height: 5),
         Text(
-          "Paso ${_currentStep + 1} de $totalSteps",
+          "Paso ${_currentStep + 1} de $totalSteps", // Texto actualizado
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
     );
+  }
+
+  /// 🔹 **Función para calcular dinámicamente el total de pasos**
+  int _calcularTotalPasos() {
+    bool hayCultivoEnfermo = false;
+
+    for (var cultivo in _cultivosSeleccionados) {
+      for (var tipo in _tiposSeleccionadosPorCultivo[cultivo] ?? []) {
+        if (_configuracionFinal[cultivo]?[tipo]?['estado'] == "Enfermo") {
+          hayCultivoEnfermo = true;
+          break;
+        }
+      }
+      if (hayCultivoEnfermo) break;
+    }
+
+    return hayCultivoEnfermo
+        ? 5
+        : 4; // Si hay cultivos enfermos, el total es 5, si no, es 4.
   }
 
   Widget _buildStepContent() {

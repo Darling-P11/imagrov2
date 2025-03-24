@@ -79,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
             msg: "Usuario registrado correctamente",
             toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF4CAF50),
             textColor: Colors.white,
           );
         } else {
@@ -130,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   'Imagro',
                   style: TextStyle(
-                    color: Colors.green,
+                    color: const Color.fromARGB(255, 11, 163, 127),
                     fontSize: 35,
                     fontWeight: FontWeight.bold,
                   ),

@@ -176,7 +176,7 @@ class _PasswordLoginScreenState extends State<PasswordLoginScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.green,
+                        color: const Color(0xFF0BA37F),
                       ),
                     ),
                     SizedBox(height: 80), // Separación entre subtítulo e imagen
@@ -214,7 +214,8 @@ class _PasswordLoginScreenState extends State<PasswordLoginScreen> {
                       controller: _passwordController,
                       obscureText: !_isPasswordVisible,
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.lock, color: Colors.green),
+                        prefixIcon:
+                            Icon(Icons.lock, color: const Color(0xFF0BA37F)),
                         hintText: 'Contraseña',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -224,7 +225,7 @@ class _PasswordLoginScreenState extends State<PasswordLoginScreen> {
                             _isPasswordVisible
                                 ? Icons.visibility
                                 : Icons.visibility_off,
-                            color: Colors.green,
+                            color: const Color(0xFF0BA37F),
                           ),
                           onPressed: () {
                             setState(() {
@@ -260,7 +261,7 @@ class _PasswordLoginScreenState extends State<PasswordLoginScreen> {
                       child: ElevatedButton(
                         onPressed: _login,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
+                          backgroundColor: const Color(0xFF0BA37F),
                           shape: CircleBorder(),
                           padding: EdgeInsets.all(16),
                         ),
@@ -276,7 +277,7 @@ class _PasswordLoginScreenState extends State<PasswordLoginScreen> {
               color: Colors.white.withOpacity(0.8),
               child: Center(
                 child: CircularProgressIndicator(
-                  color: Colors.green,
+                  color: const Color(0xFF0BA37F),
                   strokeWidth: 6.0,
                 ),
               ),

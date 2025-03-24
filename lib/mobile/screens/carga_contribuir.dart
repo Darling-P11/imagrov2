@@ -931,9 +931,7 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
       },
     );
 
-    // ✅ SUBIDA CONCURRENTE DE IMÁGENES
-    List<Future<void>> tareasDeSubida = [];
-    //CARGA DE IMAGENES AL FIRESTORAGE
+    // ✅ Subida de imágenes con nombres únicos y sin caracteres extra
     for (var seccion in secciones) {
       String cultivo = seccion['cultivo'];
       String tipo = seccion['tipo'];
@@ -942,64 +940,62 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
 
       for (var imagen in List.from(seccion['imagenes'])) {
         File file = File(imagen.path);
-        String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
 
-        // ✅ Definir el path organizado según la configuración
+        // ✅ Nombre único basado en timestamp
+        String fileName = "${DateTime.now().millisecondsSinceEpoch}.jpg";
+
+        // ✅ Definir la ruta organizada
         String rutaStorage =
-            "contribuciones_por_aprobar/$userId/$contribucionId/$cultivo/$tipo/$estado/$enfermedad/$timestamp.jpg";
+            "contribuciones_por_aprobar/$userId/$contribucionId/$cultivo/$tipo/$estado/$enfermedad/$fileName";
 
-        tareasDeSubida.add(() async {
-          int intentos = 0;
-          bool subidaExitosa = false;
+        bool subidaExitosa = false;
+        int intentos = 0;
 
-          while (intentos < 3 && !subidaExitosa) {
-            try {
-              UploadTask uploadTask =
-                  FirebaseStorage.instance.ref(rutaStorage).putFile(file);
-              TaskSnapshot snapshot = await uploadTask;
-              String imageUrl = await snapshot.ref.getDownloadURL();
+        while (!subidaExitosa && intentos < 3) {
+          try {
+            UploadTask uploadTask =
+                FirebaseStorage.instance.ref(rutaStorage).putFile(file);
+            TaskSnapshot snapshot = await uploadTask;
+            String imageUrl = await snapshot.ref.getDownloadURL();
 
-              imagenesSubidas.add({
-                "url": imageUrl,
-                "cultivo": cultivo,
-                "tipo": tipo,
-                "estado": estado,
-                "enfermedad": enfermedad,
-                "latitud": ubicacionGeneral["latitud"],
-                "longitud": ubicacionGeneral["longitud"],
-                "fecha_subida": now.toIso8601String(),
-              });
+            imagenesSubidas.add({
+              "url": imageUrl,
+              "cultivo": cultivo,
+              "tipo": tipo,
+              "estado": estado,
+              "enfermedad": enfermedad,
+              "latitud": ubicacionGeneral["latitud"],
+              "longitud": ubicacionGeneral["longitud"],
+              "fecha_subida": now.toIso8601String(),
+            });
 
-              subidaExitosa = true;
-            } catch (e) {
-              intentos++;
-              if (intentos >= 3) {
-                Fluttertoast.showToast(
-                    msg:
-                        "Error al subir imagen tras 3 intentos: ${e.toString()}",
-                    backgroundColor: Colors.red);
-              }
+            subidaExitosa = true;
+          } catch (e) {
+            intentos++;
+            if (intentos >= 3) {
+              Fluttertoast.showToast(
+                  msg: "Error al subir imagen tras 3 intentos: ${e.toString()}",
+                  backgroundColor: Colors.red);
             }
           }
+        }
 
-          imagenesSubidasCount++;
-          _actualizarDialogoCarga(imagenesSubidasCount, totalImagenes);
-        }());
+        imagenesSubidasCount++;
+        _actualizarDialogoCarga(imagenesSubidasCount, totalImagenes);
       }
     }
 
-    // 🔹 Esperar a que todas las imágenes se suban en paralelo
-    await Future.wait(tareasDeSubida);
-
-    // 🔹 Guardar configuración en historialConfiguracion
+    // 🔹 Guardar configuración en historialConfiguracion antes de eliminarla
     DocumentSnapshot configSnapshot = await FirebaseFirestore.instance
         .collection('configuracionesUsuarios')
         .doc(userId)
         .get();
 
+    // ✅ Verificar si la configuración existe
     if (!configSnapshot.exists) {
       Fluttertoast.showToast(
-          msg: "No hay configuración activa.", backgroundColor: Colors.red);
+          msg: "Error: No hay configuración activa en la base de datos.",
+          backgroundColor: Colors.red);
       return;
     }
 
@@ -1012,17 +1008,18 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
       return;
     }
 
-    // 🔹 Agregar datos adicionales
+    // ✅ Agregar datos adicionales antes de guardar
     configData['estado'] = 'enviado';
     configData['fecha_envio'] = now.toIso8601String();
     configData['contribucion_id'] = contribucionId;
 
-    // 🔹 Guardar en historialConfiguracion/enviado
+    // 🔹 Guardar la configuración en historialConfiguracion/enviado
     await FirebaseFirestore.instance
         .collection('historialConfiguracion')
         .doc(userId)
         .collection('enviado')
-        .add(configData);
+        .doc(contribucionId)
+        .set(configData);
 
     // 🔹 Guardar en historialContribuciones/enviado con ubicación general
     await FirebaseFirestore.instance
@@ -1039,7 +1036,7 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
       "cantidad_imagenes": imagenesSubidas.length,
     });
 
-    // 🔹 Eliminar configuración temporal del usuario
+    // ✅ Eliminar la configuración temporal del usuario
     await FirebaseFirestore.instance
         .collection('configuracionesUsuarios')
         .doc(userId)

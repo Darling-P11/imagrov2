@@ -69,19 +69,10 @@ class HeaderWidget extends StatelessWidget {
                             ),
                           ],
                         ),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.notifications,
-                                  color: Colors.white),
-                              onPressed: () {},
-                            ),
-                            ProfileDropdownMenu(
-                              user: user,
-                              userImage: userImage,
-                              userName: userName,
-                            ),
-                          ],
+                        ProfileDropdownMenu(
+                          user: user,
+                          userImage: userImage,
+                          userName: userName,
                         ),
                       ],
                     ),
@@ -108,7 +99,8 @@ class HeaderWidget extends StatelessWidget {
                               ),
                             ),
                             OutlinedButton(
-                              onPressed: () => _abrirWebsite(), // ✅ Redirigir
+                              onPressed: () =>
+                                  _abrirWebsite(), // ✅ Redirigir a la web
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(color: Colors.white),
                                 backgroundColor: Colors.white,
@@ -117,7 +109,7 @@ class HeaderWidget extends StatelessWidget {
                                 ),
                               ),
                               child: Text(
-                                'Website',
+                                'Imagro Web', // ✅ Se cambió el texto del botón
                                 style: TextStyle(
                                   color: Color(0xFF038E6F),
                                   fontWeight: FontWeight.bold,
@@ -164,13 +156,18 @@ class HeaderWidget extends StatelessWidget {
     );
   }
 
-  // ✅ Función para abrir el sitio web
+  // ✅ Función para abrir Imagro Web en el navegador
   void _abrirWebsite() async {
-    final Uri url = Uri.parse('imagro-b9269.web.app');
+    final Uri url = Uri.parse('https://imagroweb.netlify.app');
+
     if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
+      await launchUrl(
+        url,
+        mode:
+            LaunchMode.externalApplication, // 🔹 Abre el navegador del sistema
+      );
     } else {
-      throw 'No se pudo abrir $url';
+      debugPrint('No se pudo abrir la URL: $url');
     }
   }
 

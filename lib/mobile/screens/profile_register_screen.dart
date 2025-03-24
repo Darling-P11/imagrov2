@@ -11,7 +11,8 @@ class ProfileRegisterScreen extends StatefulWidget {
   final String email;
   final String password;
 
-  const ProfileRegisterScreen({super.key, required this.email, required this.password});
+  const ProfileRegisterScreen(
+      {super.key, required this.email, required this.password});
 
   @override
   _ProfileRegisterScreenState createState() => _ProfileRegisterScreenState();
@@ -128,6 +129,7 @@ class _ProfileRegisterScreenState extends State<ProfileRegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: BackButton(color: Colors.black),
         backgroundColor: Colors.white,
@@ -148,7 +150,8 @@ class _ProfileRegisterScreenState extends State<ProfileRegisterScreen> {
                   ),
                   Text(
                     'Ingresa tu contacto',
-                    style: TextStyle(fontSize: 18, color: Colors.green),
+                    style:
+                        TextStyle(fontSize: 18, color: const Color(0xFF0BA37F)),
                   ),
                   SizedBox(height: 30),
                   Center(
@@ -156,7 +159,7 @@ class _ProfileRegisterScreenState extends State<ProfileRegisterScreen> {
                       onTap: _pickImage,
                       child: CircleAvatar(
                         radius: 85,
-                        backgroundColor: Colors.green[200],
+                        backgroundColor: const Color(0xFF0BA37F),
                         backgroundImage: _profileImage != null
                             ? FileImage(_profileImage!)
                             : null,
@@ -170,7 +173,8 @@ class _ProfileRegisterScreenState extends State<ProfileRegisterScreen> {
                   TextFormField(
                     controller: _nameController,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.person, color: Colors.green),
+                      prefixIcon:
+                          Icon(Icons.person, color: const Color(0xFF0BA37F)),
                       hintText: 'Nombre completo',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -225,7 +229,8 @@ class _ProfileRegisterScreenState extends State<ProfileRegisterScreen> {
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.phone, color: Colors.green),
+                      prefixIcon:
+                          Icon(Icons.phone, color: const Color(0xFF0BA37F)),
                       hintText: 'Número de teléfono',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -282,7 +287,7 @@ class _ProfileRegisterScreenState extends State<ProfileRegisterScreen> {
                     child: ElevatedButton(
                       onPressed: _registerUser,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: const Color(0xFF0BA37F),
                         shape: CircleBorder(),
                         padding: EdgeInsets.all(16),
                       ),

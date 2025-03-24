@@ -9,7 +9,7 @@ class FooterWidget extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 0),
+          padding: const EdgeInsets.only(bottom: 8),
           child: Image.asset(
             'assets/images/logo_banner.png',
             width: 80,
@@ -18,19 +18,15 @@ class FooterWidget extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(bottom: 16, right: 16),
-          child: Align(
-            alignment: Alignment.bottomRight,
-            child: FloatingActionButton(
-              onPressed: () {
-                // Acción para compartir
-              },
-              backgroundColor: const Color(0xFF0BA37F),
-              child: const Icon(
-                Icons.share,
-                color: Colors.white,
-              ),
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Text(
+            "Imagro v1.0",
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
             ),
+            textAlign: TextAlign.center,
           ),
         ),
       ],

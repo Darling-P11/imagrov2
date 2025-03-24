@@ -93,16 +93,16 @@ class ProfileDropdownMenu extends StatelessWidget {
             ),
           ),
         ),
-        PopupMenuItem(
-          value: 3,
-          child: ListTile(
-            leading: Icon(Icons.help_outline, color: Colors.black87),
-            title: Text(
-              'Tutorial',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-          ),
-        ),
+        //PopupMenuItem(
+        //  value: 3,
+        //  child: ListTile(
+        //    leading: Icon(Icons.help_outline, color: Colors.black87),
+        //    title: Text(
+        //     'Tutorial',
+        //    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        //   ),
+        //  ),
+        // ),
         PopupMenuDivider(),
         PopupMenuItem(
           value: 4,

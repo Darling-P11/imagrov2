@@ -77,6 +77,7 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: BackButton(color: Colors.black),
         backgroundColor: Colors.white,
@@ -104,7 +105,7 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                      color: const Color(0xFF0BA37F),
                     ),
                   ),
                   SizedBox(height: 20),
@@ -112,7 +113,8 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
                     controller: _passwordController,
                     obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock, color: Colors.green),
+                      prefixIcon:
+                          Icon(Icons.lock, color: const Color(0xFF0BA37F)),
                       hintText: 'Contraseña',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -122,7 +124,7 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
                           _isPasswordVisible
                               ? Icons.visibility
                               : Icons.visibility_off,
-                          color: Colors.green,
+                          color: const Color(0xFF0BA37F),
                         ),
                         onPressed: () {
                           setState(() {
@@ -138,7 +140,8 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
                     controller: _confirmPasswordController,
                     obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock, color: Colors.green),
+                      prefixIcon:
+                          Icon(Icons.lock, color: const Color(0xFF0BA37F)),
                       hintText: 'Confirmar contraseña',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -148,7 +151,7 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
                           _isPasswordVisible
                               ? Icons.visibility
                               : Icons.visibility_off,
-                          color: Colors.green,
+                          color: const Color(0xFF0BA37F),
                         ),
                         onPressed: () {
                           setState(() {
@@ -170,7 +173,7 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
                     child: ElevatedButton(
                       onPressed: _nextStep,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: const Color(0xFF0BA37F),
                         shape: CircleBorder(),
                         padding: EdgeInsets.all(16),
                       ),
@@ -186,7 +189,8 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
               color: Colors.black54, // Fondo semitransparente
               child: Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(const Color(0xFF0BA37F)),
                   strokeWidth: 6,
                 ),
               ),
