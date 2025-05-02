@@ -11,6 +11,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:exif/exif.dart';
 
 class CargaContribuirScreen extends StatefulWidget {
   @override
@@ -1128,4 +1129,7 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
         ) ??
         false;
   }
+  
+
+  
 }
