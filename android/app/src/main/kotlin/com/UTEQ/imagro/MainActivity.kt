@@ -1,4 +1,4 @@
-package com.example.imagro
+package com.UTEQ.imagro
 
 import io.flutter.embedding.android.FlutterActivity
 

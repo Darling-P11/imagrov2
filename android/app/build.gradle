@@ -5,8 +5,16 @@ plugins {
     id "com.google.gms.google-services" // Plugin para conectar con Firebase
 }
 
+//PARA FIRMAR LA APP
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+//
+
 android {
-    namespace = "com.example.imagro"
+    namespace = "com.UTEQ.imagro"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +28,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.imagro"
+        applicationId = "com.UTEQ.imagro"
         minSdk = 23 // Cambia de flutter.minSdkVersion a 23 para evitar errores
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -30,9 +38,21 @@ android {
         multiDexEnabled true
     }
 
+    signingConfigs {
+        release {
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

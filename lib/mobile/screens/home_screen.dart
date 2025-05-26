@@ -31,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
           msg: "Inicio de sesión cancelado",
           toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color.fromARGB(255, 255, 115, 0),
           textColor: Colors.white,
         );
         setState(() {
@@ -187,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.white.withOpacity(0.8),
               child: Center(
                 child: CircularProgressIndicator(
-                  color: Colors.green,
+                  color: const Color.fromARGB(255, 11, 163, 127),
                   strokeWidth: 6.0,
                 ),
               ),

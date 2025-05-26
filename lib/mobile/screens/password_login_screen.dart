@@ -165,16 +165,16 @@ class _PasswordLoginScreenState extends State<PasswordLoginScreen> {
                     Text(
                       'Iniciar sesión',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     SizedBox(
-                        height: 3), // Separación entre el título y subtítulo
+                        height: 1), // Separación entre el título y subtítulo
                     Text(
                       'Ingresa tu contraseña',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF0BA37F),
                       ),
@@ -214,18 +214,35 @@ class _PasswordLoginScreenState extends State<PasswordLoginScreen> {
                       controller: _passwordController,
                       obscureText: !_isPasswordVisible,
                       decoration: InputDecoration(
-                        prefixIcon:
-                            Icon(Icons.lock, color: const Color(0xFF0BA37F)),
+                        prefixIcon: Icon(Icons.lock, color: Color(0xFF0BA37F)),
                         hintText: 'Contraseña',
-                        border: OutlineInputBorder(
+                        enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: Color.fromARGB(
+                                  255, 0, 0, 0)), // Borde verde por defecto
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: Color(0xFF0BA37F),
+                              width: 2.0), // Borde verde al enfocar
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: Colors.red), // Borde rojo en error
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.red, width: 2.0),
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _isPasswordVisible
                                 ? Icons.visibility
                                 : Icons.visibility_off,
-                            color: const Color(0xFF0BA37F),
+                            color: Color(0xFF0BA37F),
                           ),
                           onPressed: () {
                             setState(() {

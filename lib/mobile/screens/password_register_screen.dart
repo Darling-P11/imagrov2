@@ -113,18 +113,32 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
                     controller: _passwordController,
                     obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
-                      prefixIcon:
-                          Icon(Icons.lock, color: const Color(0xFF0BA37F)),
+                      prefixIcon: Icon(Icons.lock, color: Color(0xFF0BA37F)),
                       hintText: 'Contraseña',
-                      border: OutlineInputBorder(
+                      enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: Color.fromARGB(255, 0, 0, 0)),
+                      ), //border default
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: Color(0xFF0BA37F), width: 2.0),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.red),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.red, width: 2.0),
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _isPasswordVisible
                               ? Icons.visibility
                               : Icons.visibility_off,
-                          color: const Color(0xFF0BA37F),
+                          color: Color(0xFF0BA37F),
                         ),
                         onPressed: () {
                           setState(() {
@@ -140,18 +154,32 @@ class _PasswordRegisterScreenState extends State<PasswordRegisterScreen> {
                     controller: _confirmPasswordController,
                     obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
-                      prefixIcon:
-                          Icon(Icons.lock, color: const Color(0xFF0BA37F)),
+                      prefixIcon: Icon(Icons.lock, color: Color(0xFF0BA37F)),
                       hintText: 'Confirmar contraseña',
-                      border: OutlineInputBorder(
+                      enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: Color.fromARGB(255, 0, 0, 0)),
+                      ), //border default
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: Color(0xFF0BA37F), width: 2.0),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.red),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.red, width: 2.0),
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _isPasswordVisible
                               ? Icons.visibility
                               : Icons.visibility_off,
-                          color: const Color(0xFF0BA37F),
+                          color: Color(0xFF0BA37F),
                         ),
                         onPressed: () {
                           setState(() {

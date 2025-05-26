@@ -150,8 +150,10 @@ class _ProfileRegisterScreenState extends State<ProfileRegisterScreen> {
                   ),
                   Text(
                     'Ingresa tu contacto',
-                    style:
-                        TextStyle(fontSize: 18, color: const Color(0xFF0BA37F)),
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0BA37F)),
                   ),
                   SizedBox(height: 30),
                   Center(
@@ -176,8 +178,23 @@ class _ProfileRegisterScreenState extends State<ProfileRegisterScreen> {
                       prefixIcon:
                           Icon(Icons.person, color: const Color(0xFF0BA37F)),
                       hintText: 'Nombre completo',
-                      border: OutlineInputBorder(
+                      enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: Color.fromARGB(255, 0, 0, 0)),
+                      ), //border default
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: Color(0xFF0BA37F), width: 2.0),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.red),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.red, width: 2.0),
                       ),
                     ),
                     onChanged: (value) {
@@ -232,8 +249,23 @@ class _ProfileRegisterScreenState extends State<ProfileRegisterScreen> {
                       prefixIcon:
                           Icon(Icons.phone, color: const Color(0xFF0BA37F)),
                       hintText: 'Número de teléfono',
-                      border: OutlineInputBorder(
+                      enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: Color.fromARGB(255, 0, 0, 0)),
+                      ), //border default
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: Color(0xFF0BA37F), width: 2.0),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.red),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.red, width: 2.0),
                       ),
                     ),
                     onChanged: (value) {

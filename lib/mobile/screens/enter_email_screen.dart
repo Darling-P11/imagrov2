@@ -34,10 +34,10 @@ class _EnterEmailScreenState extends State<EnterEmailScreen> {
         if (methods.isNotEmpty) {
           // Si hay métodos, el correo existe
           Fluttertoast.showToast(
-            msg: 'Correo existente, redirigiendo al login',
+            msg: 'Ingresa tu contraseña para continuar',
             toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
-            backgroundColor: const Color.fromARGB(255, 224, 129, 5),
+            backgroundColor: const Color.fromARGB(255, 255, 115, 0),
             textColor: Colors.white,
           );
           Navigator.push(
@@ -49,10 +49,10 @@ class _EnterEmailScreenState extends State<EnterEmailScreen> {
         } else {
           // Si no hay métodos, el correo no está registrado
           Fluttertoast.showToast(
-            msg: 'Correo no registrado, redirigiendo al registro',
+            msg: 'Bienvenido. Vamos a crear tu cuenta.',
             toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
-            backgroundColor: const Color.fromARGB(255, 224, 129, 5),
+            backgroundColor: const Color.fromARGB(255, 255, 115, 0),
             textColor: Colors.white,
           );
           Navigator.push(
@@ -129,9 +129,27 @@ class _EnterEmailScreenState extends State<EnterEmailScreen> {
                     decoration: InputDecoration(
                       prefixIcon:
                           Icon(Icons.email, color: const Color(0xFF0BA37F)),
-                      hintText: 'example@example.com',
-                      border: OutlineInputBorder(
+                      hintText: 'tucorreo@example.com',
+                      enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: Color.fromARGB(
+                                255, 0, 0, 0)), // Borde verde por defecto
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: Color(0xFF0BA37F),
+                            width: 2.0), // Borde verde al enfocar
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: Colors.red), // Borde rojo en error
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.red, width: 2.0),
                       ),
                     ),
                     validator: (value) {
