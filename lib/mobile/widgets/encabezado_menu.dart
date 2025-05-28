@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:imagro/mobile/widgets/submenu_encabezado.dart';
 import 'package:url_launcher/url_launcher.dart'; // ✅ Importar url_launcher
 import 'package:shimmer/shimmer.dart'; // loading skeleton
+import 'package:imagro/mobile/screens/notifications_screen.dart'; //importar notificaciones
 
 class HeaderWidget extends StatelessWidget {
   final User? user;
@@ -49,6 +50,7 @@ class HeaderWidget extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        //SAludo y fecha
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -70,10 +72,80 @@ class HeaderWidget extends StatelessWidget {
                             ),
                           ],
                         ),
-                        ProfileDropdownMenu(
-                          user: user,
-                          userImage: userImage,
-                          userName: userName,
+                        // Notificación + perfil
+                        Row(
+                          children: [
+                            // Ícono de notificación
+                            StreamBuilder<QuerySnapshot>(
+                              stream: user != null
+                                  ? FirebaseFirestore.instance
+                                      .collection('notificaciones')
+                                      .doc(user!.uid)
+                                      .collection('mensajes')
+                                      .where('leida', isEqualTo: false)
+                                      .snapshots()
+                                  : null,
+                              builder: (context, snapshot) {
+                                final int cantidadNoLeidas = snapshot.hasData
+                                    ? snapshot.data!.docs.length
+                                    : 0;
+
+                                return Stack(
+                                  alignment: Alignment.topRight,
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(Icons.notifications_none,
+                                          color: Colors.white),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const NotificationsScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    if (cantidadNoLeidas > 0)
+                                      Positioned(
+                                        right: 6,
+                                        top: 6,
+                                        child: Container(
+                                          padding: EdgeInsets.all(2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          constraints: BoxConstraints(
+                                            minWidth: 16,
+                                            minHeight: 16,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              cantidadNoLeidas > 9
+                                                  ? '9+'
+                                                  : '$cantidadNoLeidas',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              },
+                            ),
+
+                            // Menú de perfil
+                            ProfileDropdownMenu(
+                              user: user,
+                              userImage: userImage,
+                              userName: userName,
+                            ),
+                          ],
                         ),
                       ],
                     ),
