@@ -9,9 +9,10 @@ import 'package:imagro/mobile/screens/enter_email_screen.dart';
 import 'package:imagro/mobile/screens/password_login_screen.dart';
 import 'package:imagro/mobile/screens/password_register_screen.dart'; // Registro incluido
 import 'package:intl/date_symbol_data_local.dart'; // Para inicializar locales
-import 'package:imagro/mobile/screens/profile_screen.dart'; // Importa la pantalla de perfil
+import 'package:imagro/mobile/widgets/sub_menu/profile_screen.dart'; // Importa la pantalla de perfil
 import 'package:imagro/mobile/screens/contribuir_confg.dart';
 import 'package:imagro/mobile/screens/carga_contribuir.dart'; // Importa la pantalla de carga de contribuciones
+import 'package:imagro/mobile/widgets/sub_menu/change_password_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
             ConfiguracionContribucionScreen(),
         '/carga-contribucion': (context) => CargaContribuirScreen(),
         '/historial_solicitud': (context) => HistorialSolicitudScreen(),
+        '/change-password': (context) => const ChangePasswordScreen(),
       },
     );
   }
