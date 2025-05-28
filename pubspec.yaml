@@ -55,6 +55,7 @@ dependencies:
   flutter_screenutil: ^5.9.0
   geocoding: ^2.0.5
   exif: ^3.3.0
+  
 
 
 
@@ -95,6 +96,9 @@ flutter:
     - assets/icons/estadisticas.png
     - assets/images/logo_banner.png
     - assets/images/logo_banner_verde.png
+    - assets/icons/alerts_permissions/icon_camera_3d.png
+    - assets/icons/alerts_permissions/icon_location_3d.png
+    - assets/icons/alerts_permissions/icon_notification_3d.png
 
 flutter_icons:
   android: true

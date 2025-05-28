@@ -2,9 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'home_screen.dart';
 import 'menu_screen.dart';
 import 'carga_contribuir.dart'; // Importa la pantalla de carga de contribuciones
+import 'permission_screen.dart'; //pantalla de permisos
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,12 +20,14 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _verificarPermisos();
     _verificarUsuarioYConfiguracion();
   }
 
   Future<void> _verificarUsuarioYConfiguracion() async {
     // Simular tiempo de carga
     await Future.delayed(Duration(seconds: 3));
+    if (!mounted) return;
 
     // Verificar si hay un usuario autenticado
     User? currentUser = FirebaseAuth.instance.currentUser;
@@ -44,6 +49,8 @@ class _SplashScreenState extends State<SplashScreen> {
         .doc(userId)
         .get();
 
+    if (!mounted) return;
+
     if (userConfig.exists && userConfig['estado'] == 'pendiente') {
       print(
           "🔹 Configuración pendiente encontrada. Redirigiendo a carga de imágenes...");
@@ -58,6 +65,27 @@ class _SplashScreenState extends State<SplashScreen> {
         MaterialPageRoute(builder: (context) => MenuScreen()),
       );
     }
+  }
+
+  Future<void> _verificarPermisos() async {
+    await Future.delayed(Duration(seconds: 2)); // animación splash
+
+    final prefs = await SharedPreferences.getInstance();
+    final permisosYaSolicitados = prefs.getBool('permisosSolicitados') ?? false;
+
+    if (permisosYaSolicitados) {
+      // Ya se solicitó una vez → ir directamente a la lógica de usuario
+      _verificarUsuarioYConfiguracion();
+      return;
+    }
+
+    // Aún no se ha solicitado → guardar bandera y mostrar pantalla de permisos
+    await prefs.setBool('permisosSolicitados', true);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const PermissionScreen()),
+    );
   }
 
   @override
