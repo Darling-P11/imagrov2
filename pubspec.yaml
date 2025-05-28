@@ -55,7 +55,7 @@ dependencies:
   flutter_screenutil: ^5.9.0
   geocoding: ^2.0.5
   exif: ^3.3.0
-  
+  shimmer: ^2.0.0
 
 
 

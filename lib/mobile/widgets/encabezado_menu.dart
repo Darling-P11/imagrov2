@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:imagro/mobile/widgets/submenu_encabezado.dart';
 import 'package:url_launcher/url_launcher.dart'; // ✅ Importar url_launcher
+import 'package:shimmer/shimmer.dart'; // loading skeleton
 
 class HeaderWidget extends StatelessWidget {
   final User? user;
@@ -22,13 +23,13 @@ class HeaderWidget extends StatelessWidget {
     return FutureBuilder<int>(
       future: _getTotalContributions(),
       builder: (context, contribSnapshot) {
-        int contribCount = contribSnapshot.hasData ? contribSnapshot.data! : 0;
+        int? contribCount = contribSnapshot.data;
 
         return StreamBuilder(
           stream: FirebaseFirestore.instance.collection('users').snapshots(),
           builder: (context, AsyncSnapshot<QuerySnapshot> userSnapshot) {
-            int userCount =
-                userSnapshot.hasData ? userSnapshot.data!.docs.length : 0;
+            int? userCount =
+                userSnapshot.hasData ? userSnapshot.data!.docs.length : null;
 
             return Container(
               padding: EdgeInsets.only(
@@ -123,26 +124,30 @@ class HeaderWidget extends StatelessWidget {
                         SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildStatCard(
-                              image: 'assets/icons/usuarios.png',
-                              title: 'Usuarios',
-                              count: userCount.toString(),
-                              backgroundColor: Color(0xFFA7D590),
-                            ),
-                            _buildStatCard(
-                              image: 'assets/icons/datasets.png',
-                              title: 'Datasets',
-                              count: '3',
-                              backgroundColor: Color(0xFF62C8B6),
-                            ),
-                            _buildStatCard(
-                              image: 'assets/icons/contribuciones.png',
-                              title: 'Aportaciones',
-                              count: contribCount.toString(),
-                              backgroundColor: Color(0xFF8CE6A6),
-                            ),
-                          ],
+                          children: userCount == null || contribCount == null
+                              ? _buildSkeletonStats() // Loading
+                              : [
+                                  _buildStatCard(
+                                    image: 'assets/icons/usuarios.png',
+                                    title: 'Usuarios',
+                                    count:
+                                        userCount?.toString(), // puede ser null
+                                    backgroundColor: Color(0xFFA7D590),
+                                  ),
+                                  _buildStatCard(
+                                    image: 'assets/icons/datasets.png',
+                                    title: 'Modelos IA',
+                                    count: '3', // fijo
+                                    backgroundColor: Color(0xFF62C8B6),
+                                  ),
+                                  _buildStatCard(
+                                    image: 'assets/icons/contribuciones.png',
+                                    title: 'Aportaciones',
+                                    count: contribCount
+                                        ?.toString(), // puede ser null
+                                    backgroundColor: Color(0xFF8CE6A6),
+                                  ),
+                                ],
                         ),
                       ],
                     ),
@@ -206,7 +211,7 @@ class HeaderWidget extends StatelessWidget {
   Widget _buildStatCard({
     required String image,
     required String title,
-    required String count,
+    required String? count,
     required Color backgroundColor,
   }) {
     return Container(
@@ -230,6 +235,7 @@ class HeaderWidget extends StatelessWidget {
           SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Image.asset(
                 image,
@@ -237,18 +243,46 @@ class HeaderWidget extends StatelessWidget {
                 height: 27,
               ),
               SizedBox(width: 8),
-              Text(
-                count,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
+              count == null
+                  ? Shimmer.fromColors(
+                      baseColor: Colors.grey.shade300,
+                      highlightColor: Colors.grey.shade100,
+                      child: Container(
+                        width: 25,
+                        height: 22,
+                        color: Colors.grey.shade300,
+                      ),
+                    )
+                  : Text(
+                      count,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildSkeletonStats() {
+    return List.generate(3, (index) {
+      return Shimmer.fromColors(
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Container(
+          width: 100,
+          height: 90,
+          margin: EdgeInsets.symmetric(horizontal: 4),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade300,
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    });
   }
 }
