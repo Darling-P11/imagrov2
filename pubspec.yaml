@@ -99,6 +99,7 @@ flutter:
     - assets/icons/alerts_permissions/icon_camera_3d.png
     - assets/icons/alerts_permissions/icon_location_3d.png
     - assets/icons/alerts_permissions/icon_notification_3d.png
+    - assets/icons/logo_app.png
 
 flutter_icons:
   android: true

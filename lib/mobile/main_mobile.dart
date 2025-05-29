@@ -14,6 +14,8 @@ import 'package:imagro/mobile/screens/contribuir_confg.dart';
 import 'package:imagro/mobile/screens/carga_contribuir.dart'; // Importa la pantalla de carga de contribuciones
 import 'package:imagro/mobile/widgets/sub_menu/change_password_screen.dart';
 import 'package:imagro/mobile/widgets/sub_menu/permissionspage.dart';
+import 'package:imagro/mobile/widgets/sub_menu/privacypolicypage.dart';
+import 'package:imagro/mobile/widgets/sub_menu/AboutPage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +56,8 @@ class MyApp extends StatelessWidget {
         '/historial_solicitud': (context) => HistorialSolicitudScreen(),
         '/change-password': (context) => const ChangePasswordScreen(),
         '/permissions': (context) => const PermissionsPage(),
+        '/privacy-policy': (context) => const PrivacyPolicyPage(),
+        '/about': (context) => const AboutPage(),
       },
     );
   }
