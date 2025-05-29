@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 class HistorialSolicitudScreen extends StatefulWidget {
   @override
@@ -13,13 +14,26 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
   String filtroEstado = 'General';
 
   @override
+  void initState() {
+    super.initState();
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Color(0xFF0BA37F),
+    ));
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
         children: [
           _buildEncabezado(),
           _buildFiltros(),
-          Expanded(child: _buildListaSolicitudes()),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: Duration(milliseconds: 300),
+              child: _buildListaSolicitudes(),
+            ),
+          ),
         ],
       ),
     );
@@ -31,6 +45,8 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 15,
         bottom: 20,
+        left: 15,
+        right: 15,
       ),
       decoration: BoxDecoration(
         color: Color(0xFF0BA37F),
@@ -39,27 +55,44 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
           bottomRight: Radius.circular(40),
         ),
       ),
-      child: Center(
-        child: Text(
-          'Historial de tus solicitudes',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(Icons.arrow_back_ios_new, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
           ),
-        ),
+          Expanded(
+            child: Center(
+              child: Text(
+                'Historial de tus solicitudes',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 48), // Para equilibrar visualmente el botón
+        ],
       ),
     );
   }
 
   Widget _buildFiltros() {
+    final estados = [
+      'General',
+      'Enviado',
+      'Aceptado',
+      'Rechazado',
+      'Cancelado'
+    ];
     return Padding(
-      padding: EdgeInsets.all(12),
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Column(
         children: [
           Text(
             "Filtrar búsqueda:",
-            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -68,22 +101,19 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
           ),
           SizedBox(height: 8),
           Container(
-            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+            width: double.infinity,
+            padding: EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: Colors.grey[300],
               borderRadius: BorderRadius.circular(20),
             ),
             child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 10,
+              runSpacing: 10,
               alignment: WrapAlignment.center,
-              children: [
-                _buildFiltroBoton("Enviado", Colors.blue),
-                _buildFiltroBoton("Aceptado", Colors.green),
-                _buildFiltroBoton("Rechazado", Colors.red),
-                _buildFiltroBoton(
-                    "Cancelado", Colors.orange), // Naranja para cancelado
-              ],
+              children: estados.map((estado) {
+                return _buildFiltroBoton(estado, _getColorEstado(estado));
+              }).toList(),
             ),
           ),
         ],
@@ -116,116 +146,111 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
     );
   }
 
+  Color _getColorEstado(String estado) {
+    switch (estado) {
+      case "Aceptado":
+        return Colors.green;
+      case "Rechazado":
+        return Colors.red;
+      case "Cancelado":
+        return Colors.orange;
+      case "Enviado":
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
+
   Widget _buildListaSolicitudes() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return Center(child: Text("Usuario no autenticado"));
-    }
+    if (user == null) return Center(child: Text("Usuario no autenticado"));
     String userId = user.uid;
-    String collectionName =
-        filtroEstado.toLowerCase(); // Convertimos a minúsculas
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection("historialContribuciones")
-          .doc(userId)
-          .collection(
-              collectionName) // ← Ahora seleccionamos la subcolección correcta
-          .snapshots(),
+
+    final estados = ['enviado', 'aceptado', 'rechazado', 'cancelado'];
+
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: filtroEstado == 'General'
+          ? _obtenerTodasLasSolicitudes(userId, estados)
+          : _obtenerSolicitudesPorEstado(userId, filtroEstado.toLowerCase()),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        }
+        if (snapshot.connectionState == ConnectionState.waiting)
+          return Center(
+              child: CircularProgressIndicator(color: Color(0xFF0BA37F)));
 
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text("SELECCIONA UN ESTADO DE LA BÚSQUEDA"));
-        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty)
+          return Center(child: Text("No hay solicitudes registradas"));
 
-        List<DocumentSnapshot> solicitudes = snapshot.data!.docs;
-
-        return FutureBuilder<List<Map<String, dynamic>>>(
-          future: _obtenerSolicitudesConEstado(userId, solicitudes),
-          builder: (context, solicitudesSnapshot) {
-            if (!solicitudesSnapshot.hasData ||
-                solicitudesSnapshot.data!.isEmpty) {
-              return Center(child: Text("No hay solicitudes registradas"));
-            }
-
-            List<Map<String, dynamic>> solicitudesConEstado =
-                solicitudesSnapshot.data!;
-
-            if (filtroEstado != "General") {
-              solicitudesConEstado = solicitudesConEstado
-                  .where((solicitud) => solicitud["estado"] == filtroEstado)
-                  .toList();
-            }
-
-            return ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 10),
-              itemCount: solicitudesConEstado.length,
-              itemBuilder: (context, index) {
-                var solicitud = solicitudesConEstado[index];
-                return _buildTarjetaSolicitud(solicitud);
-              },
-            );
-          },
+        final solicitudes = snapshot.data!;
+        return ListView.builder(
+          padding: EdgeInsets.symmetric(horizontal: 10),
+          itemCount: solicitudes.length,
+          itemBuilder: (context, index) =>
+              _buildTarjetaSolicitud(solicitudes[index]),
         );
       },
     );
   }
 
-  Future<List<Map<String, dynamic>>> _obtenerSolicitudesConEstado(
-      String userId, List<DocumentSnapshot> solicitudes) async {
-    List<Map<String, dynamic>> solicitudesConEstado = [];
+  Future<List<Map<String, dynamic>>> _obtenerSolicitudesPorEstado(
+      String userId, String estado) async {
+    final docs = await FirebaseFirestore.instance
+        .collection("historialContribuciones")
+        .doc(userId)
+        .collection(estado)
+        .get();
 
-    for (var solicitudDoc in solicitudes) {
-      var solicitudData = solicitudDoc.data() as Map<String, dynamic>;
-      String configId = solicitudData["configuracion_id"];
+    return _procesarSolicitudes(userId, docs.docs, estado);
+  }
 
-      DocumentSnapshot configDoc = await FirebaseFirestore.instance
+  Future<List<Map<String, dynamic>>> _obtenerTodasLasSolicitudes(
+      String userId, List<String> estados) async {
+    List<Map<String, dynamic>> todas = [];
+    for (var estado in estados) {
+      final docs = await FirebaseFirestore.instance
+          .collection("historialContribuciones")
+          .doc(userId)
+          .collection(estado)
+          .get();
+      final procesadas = await _procesarSolicitudes(userId, docs.docs, estado);
+      todas.addAll(procesadas);
+    }
+    return todas;
+  }
+
+  Future<List<Map<String, dynamic>>> _procesarSolicitudes(
+      String userId, List<DocumentSnapshot> docs, String estado) async {
+    List<Map<String, dynamic>> resultado = [];
+
+    for (var doc in docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final configId = data["configuracion_id"];
+
+      final config = await FirebaseFirestore.instance
           .collection("historialConfiguracion")
           .doc(userId)
           .collection("enviado")
           .doc(configId)
           .get();
 
-      String estado = "Enviado";
-      if (configDoc.exists) {
-        var configData = configDoc.data() as Map<String, dynamic>;
-        estado = configData["estado"] ?? "Enviado";
-      }
+      data["estado"] = config.exists
+          ? (config.data()!["estado"] ?? estado.capitalize())
+          : estado.capitalize();
 
-      solicitudData["estado"] = filtroEstado;
-      solicitudesConEstado.add(solicitudData);
+      resultado.add(data);
     }
-
-    return solicitudesConEstado;
+    return resultado;
   }
 
   Widget _buildTarjetaSolicitud(Map<String, dynamic> solicitud) {
-    Color estadoColor;
-    switch (solicitud["estado"]) {
-      case "Aceptado":
-        estadoColor = Colors.green;
-        break;
-      case "Rechazado":
-        estadoColor = Colors.red;
-        break;
-      case "Cancelado":
-        estadoColor = Colors.orange;
-        break;
-      case "Enviado":
-      default:
-        estadoColor = Colors.blue;
-    }
-
+    Color estadoColor = _getColorEstado(solicitud["estado"]);
     String fechaFormateada = _formatearFecha(solicitud['fecha_contribucion']);
 
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        onTap: () {
-          _mostrarDetallesSolicitud(solicitud);
-        },
+        onTap: () => _mostrarDetallesSolicitud(solicitud),
         leading: Container(
           width: 50,
           height: 50,
@@ -243,17 +268,25 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
         ),
         title: Text(
           "Fecha de envío: $fechaFormateada",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+          ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text("Total de imágenes: ${solicitud['cantidad_imagenes']}"),
-            Text("Estado: ${solicitud['estado']}"),
             Text("Ubicación: ${solicitud['ubicacion'] ?? 'No registrada'}"),
+            SizedBox(height: 4),
+            Chip(
+              label: Text(solicitud["estado"]),
+              backgroundColor: estadoColor.withOpacity(0.1),
+              labelStyle: TextStyle(color: estadoColor),
+            ),
           ],
         ),
-        trailing: Icon(Icons.search, color: Colors.grey),
+        trailing: Icon(Icons.chevron_right),
       ),
     );
   }
@@ -262,7 +295,7 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
     try {
       DateTime fecha = DateTime.parse(fechaContribucion);
       return DateFormat('dd/MM/yyyy').format(fecha);
-    } catch (e) {
+    } catch (_) {
       return "Fecha no disponible";
     }
   }
@@ -278,14 +311,10 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
               children: [
                 Text(
                     "📅 Fecha de envío: ${_formatearFecha(solicitud['fecha_contribucion'])}"),
-                SizedBox(height: 5),
                 Text("📸 Total de imágenes: ${solicitud['cantidad_imagenes']}"),
-                SizedBox(height: 5),
-                Text("📝 Estado: ${solicitud['estado'] ?? 'Enviado'}"),
-                SizedBox(height: 5),
+                Text("📝 Estado: ${solicitud['estado']}"),
                 Text(
                     "📍 Ubicación: ${solicitud['ubicacion'] ?? 'No registrada'}"),
-                SizedBox(height: 5),
                 Text(
                     "🔗 ID de Configuración: ${solicitud['configuracion_id']}"),
               ],
@@ -294,13 +323,16 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
           actions: [
             TextButton(
               child: Text("Cerrar"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
           ],
         );
       },
     );
   }
+}
+
+extension StringExtension on String {
+  String capitalize() =>
+      this.length > 0 ? '${this[0].toUpperCase()}${this.substring(1)}' : '';
 }

@@ -83,3 +83,52 @@ exports.notificarCambioPassword = functions.firestore
 
     return null;
   });
+
+  exports.enviarCorreoBienvenida = functions.firestore
+  .document('notificaciones/{userId}/mensajes/{mensajeId}')
+  .onCreate(async (snap, context) => {
+    const data = snap.data();
+    const userId = context.params.userId;
+
+    if (data.titulo !== 'Bienvenido a Imagro') return null;
+
+    const user = await admin.auth().getUser(userId);
+
+    const mailOptions = {
+      from: `"Imagro Soporte" <${GMAIL_EMAIL}>`,
+      to: user.email,
+      subject: '¡Bienvenido a Imagro!',
+      html: `
+        <div style="font-family: Poppins, sans-serif; background-color: #f9f9f9; padding: 30px;">
+          <div style="max-width: 600px; margin: auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+            <div style="background-color: #0ba27f; color: white; padding: 30px; text-align: center;">
+              <img src="https://i.imgur.com/gEvCgqP.png" alt="Imagro Logo" style="width: 100px; margin-bottom: 10px;">
+              <h2 style="margin: 0;">¡Bienvenido a Imagro!</h2>
+            </div>
+            <div style="padding: 30px; color: #333; text-align: center;">
+              <p>Hola <strong>${user.displayName || 'usuario'}</strong>,</p>
+              <p>Tu cuenta fue creada exitosamente. Ahora puedes acceder a todos los servicios de Imagro.</p>
+              <p>Gracias por formar parte de nuestra comunidad.</p>
+              <a href="https://imagroweb.netlify.app"
+                 style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #0ba27f; color: white; border-radius: 5px; text-decoration: none;">
+                 Ir al sitio
+              </a>
+            </div>
+            <div style="background-color: #0ba27f; color: white; text-align: center; padding: 20px; font-size: 12px;">
+              &copy; ${new Date().getFullYear()} Imagro - Todos los derechos reservados
+            </div>
+          </div>
+        </div>
+      `,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log('✅ Correo de bienvenida enviado a:', user.email);
+    } catch (error) {
+      console.error('❌ Error al enviar correo de bienvenida:', error);
+    }
+
+    return null;
+  });
+

@@ -86,13 +86,27 @@ class _ProfileRegisterScreenState extends State<ProfileRegisterScreen> {
 
         final userId = userCredential.user!.uid;
         final photoUrl = await _uploadProfileImage(userId);
-
+        
+        //crear informacion de usuario en firestore
         await FirebaseFirestore.instance.collection('users').doc(userId).set({
           'name': _nameController.text.trim(),
           'email': widget.email,
           'phone': _phoneController.text.trim(),
           'profileImage': photoUrl ?? '',
           'createdAt': Timestamp.now(),
+        });
+
+        //crear notificacion en firestore de bienvenida
+        await FirebaseFirestore.instance
+            .collection('notificaciones')
+            .doc(userId)
+            .collection('mensajes')
+            .add({
+          'titulo': 'Bienvenido a Imagro',
+          'descripcion':
+              'Tu cuenta fue creada exitosamente. ¡Explora todo lo que tenemos para ti!',
+          'fecha': Timestamp.now(),
+          'leida': false,
         });
 
         Fluttertoast.showToast(
