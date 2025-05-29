@@ -22,8 +22,8 @@ class ProfileDropdownMenu extends StatelessWidget {
         } else if (value == 2) {
           Navigator.pushNamed(context, '/change-password');
         } else if (value == 3) {
-          Navigator.pushNamed(context, '/support');
-        } else if (value == 5) {
+          //  Navigator.pushNamed(context, '/support');
+          //} else if (value == 5) {
           Navigator.pushNamed(context, '/about');
         } else if (value == 6) {
           Navigator.pushNamed(context, '/privacy-policy');
@@ -111,14 +111,23 @@ class ProfileDropdownMenu extends StatelessWidget {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
           ),
         ),
+        //PopupMenuItem(
+        // value: 3,
+        // child: ListTile(
+        //   leading: Icon(Icons.help_outline, color: Colors.black87),
+        //  title: Text('Soporte / Ayuda',
+        //      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+        // ),
+        // ),
         PopupMenuItem(
-          value: 3,
+          value: 7,
           child: ListTile(
-            leading: Icon(Icons.help_outline, color: Colors.black87),
-            title: Text('Soporte / Ayuda',
+            leading: Icon(Icons.security_outlined, color: Colors.black87),
+            title: Text('Permisos',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
           ),
         ),
+
         PopupMenuItem(
           value: 5,
           child: ListTile(
@@ -127,19 +136,12 @@ class ProfileDropdownMenu extends StatelessWidget {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
           ),
         ),
+
         PopupMenuItem(
           value: 6,
           child: ListTile(
             leading: Icon(Icons.privacy_tip_outlined, color: Colors.black87),
             title: Text('Política de privacidad',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-          ),
-        ),
-        PopupMenuItem(
-          value: 7,
-          child: ListTile(
-            leading: Icon(Icons.security_outlined, color: Colors.black87),
-            title: Text('Permisos',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
           ),
         ),
