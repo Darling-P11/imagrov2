@@ -94,6 +94,7 @@ class _ConfiguracionContribucionScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           // ✅ Sección del encabezado con espacio para la barra de estado
@@ -125,11 +126,23 @@ class _ConfiguracionContribucionScreenState
           // ✅ Barra de progreso
           _buildProgressIndicator(),
 
-          // ✅ Contenido del proceso
+          // ✅ Contenido del proceso y nueva animacion fade
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: _buildStepContent(),
+              child: AnimatedSwitcher(
+                duration: Duration(milliseconds: 400),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey<int>(_currentStep),
+                  child: _buildStepContent(),
+                ),
+              ),
             ),
           ),
         ],
@@ -284,19 +297,19 @@ class _ConfiguracionContribucionScreenState
         SizedBox(height: 10),
 
         Padding(
-          padding: EdgeInsets.only(bottom: 20), // Agrega espacio abajo
+          padding: EdgeInsets.only(bottom: 5), // Agrega espacio abajo
           child: Align(
             alignment: Alignment.center,
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 5),
+              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 8),
               decoration: BoxDecoration(
                 color: Color.fromARGB(255, 16, 184, 144), // Color fijo verde
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(15),
               ),
               child: Text(
                 'Variedades',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -305,14 +318,16 @@ class _ConfiguracionContribucionScreenState
           ),
         ),
 
-        SizedBox(height: 10),
-
-        // ✅ Lista de variedades con alineación izquierda
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
+        // BOTONES DE SELECCION DE VARIEDAD DE CULTIVOS UX 2.0
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 10),
+          height: MediaQuery.of(context).size.height * 0.35,
+          child: GridView.count(
+            crossAxisCount: 3,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 2.5, // ajustado para que no se vean tan altos
+            physics: NeverScrollableScrollPhysics(),
             children: tiposDisponibles.map((tipo) {
               final bool isSelected = tiposSeleccionados.contains(tipo);
               return GestureDetector(
@@ -327,21 +342,32 @@ class _ConfiguracionContribucionScreenState
                   });
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    border: Border.all(
-                      color: isSelected ? Colors.green : Colors.grey,
-                      width: isSelected ? 2 : 1,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
                     color: isSelected ? Colors.green[100] : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected ? Colors.green : Colors.grey.shade400,
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isSelected
+                            ? Colors.green.withOpacity(0.3)
+                            : Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Text(
                     tipo,
                     style: TextStyle(
-                      fontSize: 16,
-                      color: isSelected ? Colors.green[900] : Colors.black,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: isSelected ? Colors.green[900] : Colors.black87,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               );
@@ -352,76 +378,82 @@ class _ConfiguracionContribucionScreenState
         Spacer(),
 
         // ✅ Botones de navegación alineados al pie de la pantalla con texto en blanco
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _currentStep--;
-                    });
-                  },
-                  icon: Icon(Icons.arrow_back, size: 18, color: Colors.white),
-                  label: Text(
-                    'Atrás',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF0BA37F),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Botón Atrás
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _currentStep--;
+                  });
+                },
+                icon: Icon(Icons.arrow_back, color: Colors.white),
+                label: Text('Atrás', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color.fromARGB(255, 0, 0, 0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                SizedBox(height: 5),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Cancelar y volver al inicio
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red[300],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  child: Text(
-                    'Cancelar',
-                    style: TextStyle(color: Colors.white),
+              ),
+
+              // Botón Cancelar
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // volver al inicio
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-              ],
-            ),
-            ElevatedButton.icon(
-              onPressed: tiposSeleccionados.isNotEmpty
-                  ? () {
-                      if (_cultivoActualIndex <
-                          _cultivosSeleccionados.length - 1) {
-                        setState(() {
-                          _cultivoActualIndex++; // Pasar al siguiente cultivo
-                        });
-                      } else {
-                        setState(() {
-                          _currentStep++; // Pasar al siguiente paso si ya seleccionamos todos los cultivos
-                          _cultivoActualIndex = 0;
-                        });
+                child: Text('Cancelar', style: TextStyle(color: Colors.white)),
+              ),
+
+              // Botón Siguiente
+              ElevatedButton.icon(
+                onPressed: tiposSeleccionados.isNotEmpty
+                    ? () {
+                        if (_cultivoActualIndex <
+                            _cultivosSeleccionados.length - 1) {
+                          setState(() {
+                            _cultivoActualIndex++;
+                          });
+                        } else {
+                          setState(() {
+                            _currentStep++;
+                            _cultivoActualIndex = 0;
+                          });
+                        }
                       }
-                    }
-                  : null, // Deshabilita si no hay selección
-              icon: Icon(Icons.arrow_forward, size: 18, color: Colors.white),
-              label: Text(
-                'Siguiente',
-                style: TextStyle(color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF0BA37F),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                    : () {
+                        Fluttertoast.showToast(
+                          msg:
+                              "Selecciona al menos una variedad para continuar.",
+                          backgroundColor: Colors.orange,
+                          textColor: Colors.white,
+                        );
+                      },
+                icon: Icon(Icons.arrow_forward, color: Colors.white),
+                label: Text('Siguiente', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: tiposSeleccionados.isNotEmpty
+                      ? Color(0xFF0BA37F)
+                      : Colors.grey.shade300,
+                  foregroundColor: tiposSeleccionados.isNotEmpty
+                      ? Colors.white
+                      : Colors.grey.shade600,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -438,6 +470,7 @@ class _ConfiguracionContribucionScreenState
     return true; // Si todos tienen estado, retorna true
   }
 
+  //seleccion de tipo de estado de la varidad del cultivo
   Widget _buildConfiguracionPorTipo() {
     final String cultivoActual = _cultivosSeleccionados[_cultivoActualIndex];
     final List<String> tiposSeleccionados =
@@ -455,7 +488,7 @@ class _ConfiguracionContribucionScreenState
                   padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                   child: Text(
                     'Selecciona el estado de las variedades de:',
@@ -468,7 +501,7 @@ class _ConfiguracionContribucionScreenState
                 padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.grey[600], // Color fijo para el cultivo actual
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(15),
                 ),
                 child: Text(
                   cultivoActual,
@@ -486,15 +519,15 @@ class _ConfiguracionContribucionScreenState
         Align(
           alignment: Alignment.center,
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 5),
+            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 8),
             decoration: BoxDecoration(
               color: Color(0xFF0BA37F), // Color verde fijo
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(15),
             ),
             child: Text(
               'Estados',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
@@ -515,7 +548,7 @@ class _ConfiguracionContribucionScreenState
                     ),
                     child: Column(
                       children: [
-                        // ✅ Container con el nombre del tipo de cultivo
+                        //  Container con el nombre del tipo de cultivo
                         Container(
                           width: double.infinity,
                           padding: EdgeInsets.all(10),
@@ -591,7 +624,7 @@ class _ConfiguracionContribucionScreenState
           ),
         ),
 
-        // ✅ Botones con validación en "Siguiente"
+        //  Botones con validación en "Siguiente"
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
           child: Row(
@@ -606,7 +639,7 @@ class _ConfiguracionContribucionScreenState
                 icon: Icon(Icons.arrow_back, color: Colors.white),
                 label: Text('Atrás', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF0BA37F),
+                  backgroundColor: Color.fromARGB(255, 0, 0, 0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -622,7 +655,7 @@ class _ConfiguracionContribucionScreenState
                   });
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
+                  backgroundColor: const Color.fromARGB(255, 212, 4, 4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -709,22 +742,22 @@ class _ConfiguracionContribucionScreenState
         Align(
           alignment: Alignment.center,
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 5),
+            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 8),
             decoration: BoxDecoration(
               color: Color(0xFF0BA37F), // Color verde fijo
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(15),
             ),
             child: Text(
               'Enfermedades',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
           ),
         ),
-        SizedBox(height: 5),
+        SizedBox(height: 2),
         Expanded(
           child: ListView(
             children: tiposEnfermos.map((tipo) {
@@ -823,7 +856,7 @@ class _ConfiguracionContribucionScreenState
                 icon: Icon(Icons.arrow_back, color: Colors.white),
                 label: Text('Atrás', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF0BA37F),
+                  backgroundColor: Color.fromARGB(255, 0, 0, 0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -839,7 +872,7 @@ class _ConfiguracionContribucionScreenState
                   });
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
+                  backgroundColor: const Color.fromARGB(255, 212, 4, 4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -987,34 +1020,54 @@ class _ConfiguracionContribucionScreenState
     return ListView(
       padding: EdgeInsets.all(16.0),
       children: [
-        Text(
-          '📋 Resumen de tu configuración',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        Row(
+          children: [
+            Icon(Icons.assignment_turned_in,
+                color: Color(0xFF0BA37F), size: 26),
+            SizedBox(width: 8),
+            Text(
+              'Resumen de tu configuración',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
-        SizedBox(height: 10),
+        SizedBox(height: 16),
         ..._configuracionFinal.entries.map((cultivoEntry) {
-          return Card(
-            elevation: 3, // Sombra para resaltar la tarjeta
-            shape: RoundedRectangleBorder(
+          return Container(
+            margin: EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
               borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 6,
+                  offset: Offset(0, 3),
+                ),
+              ],
+              border: Border.all(color: Colors.grey.shade300),
             ),
             child: Padding(
-              padding: EdgeInsets.all(12.0),
+              padding: EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🔹 Cultivo como título principal en negrita
-                  Text(
-                    '🌱 Cultivo: ${cultivoEntry.key}',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[800],
-                    ),
+                  // Título del cultivo
+                  Row(
+                    children: [
+                      Icon(Icons.eco, color: Colors.green),
+                      SizedBox(width: 6),
+                      Text(
+                        cultivoEntry.key,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[800],
+                        ),
+                      ),
+                    ],
                   ),
-                  Divider(color: Colors.grey[400]),
-
-                  // 🔹 Tipos de cultivo en lista
+                  Divider(thickness: 1, color: Colors.grey[300]),
                   ...cultivoEntry.value.entries.map((tipoEntry) {
                     final String tipo = tipoEntry.key;
                     final String estado =
@@ -1024,72 +1077,103 @@ class _ConfiguracionContribucionScreenState
                             []);
 
                     return Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // ✅ Tipo de cultivo en negrita con icono
-                          Row(
-                            children: [
-                              Icon(Icons.local_florist, color: Colors.green),
-                              SizedBox(width: 5),
-                              Text(
-                                tipo,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                      padding: const EdgeInsets.only(top: 10.0),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(color: Colors.grey.shade200),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.local_florist,
+                                    color: Colors.green.shade700),
+                                SizedBox(width: 6),
+                                Text(
+                                  tipo,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.health_and_safety,
+                                    color: Colors.red.shade400, size: 18),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Estado: $estado',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                            if (enfermedades.isNotEmpty) ...[
+                              SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Icon(Icons.warning_amber,
+                                      color: Colors.orange.shade600, size: 18),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Enfermedades:',
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              ...enfermedades.map(
+                                (e) => Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 28.0, top: 2),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.brightness_1,
+                                          size: 6, color: Colors.black54),
+                                      SizedBox(width: 6),
+                                      Text(e, style: TextStyle(fontSize: 14)),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
-                          ),
-                          Text(
-                            '🩺 Estado: $estado',
-                            style: TextStyle(fontSize: 14),
-                          ),
-
-                          // ✅ Enfermedades en una lista con viñetas
-                          if (enfermedades.isNotEmpty)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '⚠️ Enfermedades:',
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                ...enfermedades.map((e) => Text(
-                                      '• $e',
-                                      style: TextStyle(fontSize: 14),
-                                    )),
-                              ],
-                            ),
-                          SizedBox(height: 5),
-                        ],
+                          ],
+                        ),
                       ),
                     );
-                  }),
+                  }).toList(),
                 ],
               ),
             ),
           );
-        }),
+        }).toList(),
+
         SizedBox(height: 20),
 
-        //boton
-        ElevatedButton(
+        // Botón Finalizar
+        ElevatedButton.icon(
           onPressed: () {
             _mostrarDialogoConfirmacion(context);
           },
+          icon: Icon(Icons.check_circle, color: Colors.white),
+          label: Text(
+            'Finalizar',
+            style: TextStyle(
+                color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: Color(0xFF0BA37F),
+            padding: EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-          ),
-          child: Text(
-            'Finalizar',
-            style: TextStyle(color: Colors.white), // ✅ Hace el texto blanco
           ),
         ),
       ],
@@ -1105,15 +1189,15 @@ class _ConfiguracionContribucionScreenState
       // ✅ Obtener la carpeta de descargas
       Directory? downloadsDir;
       if (Platform.isAndroid) {
-        downloadsDir = Directory(
-            '/storage/emulated/0/Download'); // Ruta estándar en Android
+        downloadsDir = await getExternalStorageDirectory();
+        ; // Ruta estándar en Android
       } else if (Platform.isIOS) {
         downloadsDir = await getApplicationDocumentsDirectory();
       }
 
       if (downloadsDir == null || !await downloadsDir.exists()) {
         Fluttertoast.showToast(
-            msg: "⚠️ No se encontró la carpeta de descargas.",
+            msg: "No se encontró la carpeta de descargas.",
             toastLength: Toast.LENGTH_LONG);
         return;
       }
@@ -1125,11 +1209,12 @@ class _ConfiguracionContribucionScreenState
 
       // 🔹 Mostrar un mensaje de éxito
       Fluttertoast.showToast(
-          msg: "Archivo guardado en Descargas", toastLength: Toast.LENGTH_LONG);
+          msg: "Configuración lista para compartir",
+          toastLength: Toast.LENGTH_LONG);
     } catch (e) {
-      print("❌ Error al guardar el archivo JSON: $e");
+      print("Error al guardar el archivo JSON: $e");
       Fluttertoast.showToast(
-          msg: "❌ Error al guardar el archivo", toastLength: Toast.LENGTH_LONG);
+          msg: "Error al guardar el archivo", toastLength: Toast.LENGTH_LONG);
     }
   }
 
@@ -1204,7 +1289,8 @@ class _ConfiguracionContribucionScreenState
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () async {
-                              await _compartirConfiguracionJSON();
+                              await _guardarConfiguracionEnJSON(); // ✅ Ahora el archivo sí se genera
+                              await _compartirConfiguracionJSON(); // ✅ Y luego se comparte correctamente
                             },
                             icon: Icon(Icons.share,
                                 size: 18, color: Colors.white),
@@ -1256,7 +1342,7 @@ class _ConfiguracionContribucionScreenState
     try {
       Directory? downloadsDir;
       if (Platform.isAndroid) {
-        downloadsDir = Directory('/storage/emulated/0/Download');
+        downloadsDir = await getExternalStorageDirectory();
       } else if (Platform.isIOS) {
         downloadsDir = await getApplicationDocumentsDirectory();
       }
@@ -1276,11 +1362,11 @@ class _ConfiguracionContribucionScreenState
             text: "Aquí está mi configuración.");
       } else {
         Fluttertoast.showToast(
-            msg: "❌ Archivo no encontrado.", toastLength: Toast.LENGTH_LONG);
+            msg: " Archivo no encontrado.", toastLength: Toast.LENGTH_LONG);
       }
     } catch (e) {
       Fluttertoast.showToast(
-          msg: "❌ Error al compartir el archivo.",
+          msg: " Error al compartir el archivo.",
           toastLength: Toast.LENGTH_LONG);
     }
   }
@@ -1309,47 +1395,67 @@ class _ConfiguracionContribucionScreenState
           ),
         ),
 
-        // ✅ Lista de cultivos alineados a la izquierda
+        // BOTONES PARA SELECCION DE CULTIVOS
+        // ✅ Lista de cultivos alineados a la izquierda- mejorados UX 2.0
         Align(
           alignment:
               Alignment.centerLeft, // Cambio aquí para alinear a la izquierda
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: cultivosDisponibles.map((cultivo) {
-              final isSelected = _cultivosSeleccionados.contains(cultivo);
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    if (isSelected) {
-                      _cultivosSeleccionados.remove(cultivo);
-                      _tiposSeleccionadosPorCultivo.remove(cultivo);
-                    } else if (_cultivosSeleccionados.length < 5) {
-                      _cultivosSeleccionados.add(cultivo);
-                      _tiposSeleccionadosPorCultivo[cultivo] = [];
-                    }
-                  });
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: isSelected ? Colors.green : Colors.grey,
-                      width: isSelected ? 2 : 1,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 10),
+            height: MediaQuery.of(context).size.height * 0.3,
+            child: GridView.count(
+              crossAxisCount: 3, // Puedes usar 2 o 4 según ancho de pantalla
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 2.4, // Alarga horizontalmente
+              physics:
+                  NeverScrollableScrollPhysics(), // Desactiva scroll interno
+              children: cultivosDisponibles.map((cultivo) {
+                final isSelected = _cultivosSeleccionados.contains(cultivo);
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        _cultivosSeleccionados.remove(cultivo);
+                        _tiposSeleccionadosPorCultivo.remove(cultivo);
+                      } else if (_cultivosSeleccionados.length < 5) {
+                        _cultivosSeleccionados.add(cultivo);
+                        _tiposSeleccionadosPorCultivo[cultivo] = [];
+                      }
+                    });
+                  },
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.green[100] : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected ? Colors.green : Colors.grey.shade400,
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isSelected
+                              ? Colors.green.withOpacity(0.3)
+                              : Colors.black12,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    borderRadius: BorderRadius.circular(20),
-                    color: isSelected ? Colors.green[100] : Colors.white,
-                  ),
-                  child: Text(
-                    cultivo,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isSelected ? Colors.green[900] : Colors.black,
+                    child: Text(
+                      cultivo,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: isSelected ? Colors.green[900] : Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           ),
         ),
 
@@ -1369,7 +1475,7 @@ class _ConfiguracionContribucionScreenState
                 style: TextStyle(color: Colors.white),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(255, 170, 126, 4),
+                backgroundColor: Color.fromARGB(255, 0, 0, 0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),

@@ -270,7 +270,7 @@ class _HistorialSolicitudScreenState extends State<HistorialSolicitudScreen> {
           "Fecha de envío: $fechaFormateada",
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 15,
+            fontSize: 1,
           ),
         ),
         subtitle: Column(

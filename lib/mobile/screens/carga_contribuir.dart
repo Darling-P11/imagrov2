@@ -100,8 +100,11 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
     final dir = await getApplicationDocumentsDirectory();
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    if (secciones[index]['imagenes'].length >= 10) {
-      _mostrarDialogoLimiteImagenes(); //AUN PRO PROBAAAAAR
+    int imagenesActuales = secciones[index]['imagenes'].length;
+    int restantes = 10 - imagenesActuales;
+
+    if (restantes <= 0) {
+      _mostrarDialogoLimiteImagenes();
       Fluttertoast.showToast(
         msg: "Has alcanzado el límite de 10 imágenes.",
         toastLength: Toast.LENGTH_SHORT,
@@ -116,14 +119,33 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
 
     if (tipo == "gallery") {
       final List<XFile>? images = await _picker.pickMultiImage();
-      if (images != null) {
-        for (var img in images) {
+      if (images != null && images.isNotEmpty) {
+        // Limita las imágenes al número restante
+        final seleccionadas = images.take(restantes).toList();
+
+        for (var img in seleccionadas) {
           File savedImage =
               await File(img.path).copy('${dir.path}/${img.name}');
           nuevasImagenes.add(savedImage);
         }
+
+        // Mostrar alerta si el usuario seleccionó más de las permitidas
+        if (images.length > restantes) {
+          Fluttertoast.showToast(
+            msg:
+                "Solo se pueden subir $restantes imágenes. Las demás fueron ignoradas.",
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.orange,
+            textColor: Colors.white,
+          );
+        }
       }
     } else if (tipo == "camera") {
+      if (imagenesActuales >= 10) {
+        _mostrarDialogoLimiteImagenes();
+        return;
+      }
       final XFile? image = await _picker.pickImage(source: ImageSource.camera);
       if (image != null) {
         File savedImage =
@@ -133,7 +155,6 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
     }
 
     if (nuevasImagenes.isNotEmpty) {
-      // 🔹 Evita agregar imágenes duplicadas
       List<File> imagenesActuales = List.from(secciones[index]['imagenes']);
       for (var img in nuevasImagenes) {
         if (!imagenesActuales.any((file) => file.path == img.path)) {
@@ -143,7 +164,6 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
 
       secciones[index]['imagenes'] = imagenesActuales;
 
-      // 🔹 Guardar en SharedPreferences
       String key =
           "imagenes_${secciones[index]['cultivo']}_${secciones[index]['tipo']}_${secciones[index]['estado']}_${secciones[index]['enfermedad'] ?? 'ninguna'}";
       List<String> rutas = imagenesActuales.map((file) => file.path).toList();
@@ -435,12 +455,37 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
                       right: -6,
                       child: GestureDetector(
                         onTap: () async {
-                          setState(() {
-                            datos['imagenes'].removeAt(i);
-                          });
+                          bool confirmar = await showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text("Eliminar imagen"),
+                              content: Text(
+                                  "¿Estás seguro de que deseas eliminar esta imagen?"),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(false),
+                                  child: Text("Cancelar"),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(true),
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red),
+                                  child: Text("Eliminar",
+                                      style: TextStyle(color: Colors.white)),
+                                ),
+                              ],
+                            ),
+                          );
 
-                          // 🔹 Actualizar el caché después de eliminar
-                          await _actualizarImagenesEnCache(datos, index);
+                          if (confirmar == true) {
+                            setState(() {
+                              datos['imagenes'].removeAt(i);
+                            });
+
+                            await _actualizarImagenesEnCache(datos, index);
+                          }
                         },
                         child: Container(
                           width: 20,
@@ -529,15 +574,23 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
 
           // ✅ Botón Enviar
           ElevatedButton(
-            onPressed: () => _enviarContribucion(),
+            onPressed: _calcularProgreso() == 100
+                ? () => _enviarContribucion()
+                : null, //  Deshabilita si no está completo
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF0BA37F),
+              backgroundColor: _calcularProgreso() == 100
+                  ? Color(0xFF0BA37F)
+                  : const Color.fromARGB(255, 95, 95,
+                      95), //  Cambia el color si está deshabilitado
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
-            child: Text("Enviar  ", style: TextStyle(color: Colors.white)),
+            child: Text(
+              "Enviar  ",
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -641,7 +694,7 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Límite alcanzado"),
-        content: Text("No puedes subir más de 100 imágenes por sección."),
+        content: Text("No puedes subir más de 10 imágenes por sección."),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -861,17 +914,38 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
   }
 
   //CARGA DE IMAGENES
-  // ✅ Acción al presionar Enviar con ubicación general incluida
+  //  Acción al presionar Enviar con ubicación general incluida
   Future<void> _enviarContribucion() async {
     if (secciones.isEmpty) {
       Fluttertoast.showToast(
           msg: "No hay imágenes para enviar.", backgroundColor: Colors.red);
       return;
     }
+    //  Mostrar loading inmediato mientras se prepara la confirmación
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Color(0xFF0BA37F)),
+              SizedBox(height: 10),
+              Text("Obteniendo ubicación...",
+                  style: TextStyle(color: Colors.white)),
+            ],
+          ),
+        );
+      },
+    );
 
-    // ✅ Obtener la ubicación general
+    //  Obtener la ubicación general
     Map<String, dynamic> ubicacionGeneral = await _obtenerUbicacionGeneral();
-
+    //oculta el loading
+    Navigator.of(context).pop();
     bool confirmar = await _mostrarDialogoConfirmacionEnvio();
     if (!confirmar) return;
 
@@ -1129,7 +1203,4 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
         ) ??
         false;
   }
-  
-
-  
 }
