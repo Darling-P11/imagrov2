@@ -132,3 +132,43 @@ exports.notificarCambioPassword = functions.firestore
     return null;
   });
 
+
+  //ENVIAR CORREO DE CONTRIBUCION ENVIADA A REVISION
+  exports.notificarContribucionEnviada = functions.firestore
+  .document('notificaciones/{userId}/mensajes/{mensajeId}')
+  .onCreate(async (snap, context) => {
+    const data = snap.data();
+    const userId = context.params.userId;
+
+    if (data.titulo !== 'Contribución enviada') return null;
+
+    const user = await admin.auth().getUser(userId);
+
+    const mailOptions = {
+      from: `"Imagro Soporte" <${GMAIL_EMAIL}>`,
+      to: user.email,
+      subject: 'Contribución recibida',
+      html: `
+        <div style="font-family: Poppins, sans-serif; background-color: #f9f9f9; padding: 20px;">
+          <div style="background: white; border-radius: 8px; padding: 30px; box-shadow: 0px 4px 12px rgba(0,0,0,0.1);">
+            <h2 style="color: #0BA37F;">¡Gracias por tu contribución!</h2>
+            <p>Hola <strong>${user.displayName || 'usuario'}</strong>,</p>
+            <p>Hemos recibido tu contribución y será procesada por nuestro equipo.</p>
+            <p style="color: gray;"><small>Fecha: ${new Date(data.fecha._seconds * 1000).toLocaleString()}</small></p>
+            <p>Gracias por ser parte de Imagro.</p>
+          </div>
+        </div>
+      `,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log('📤 Correo de confirmación enviado a:', user.email);
+    } catch (error) {
+      console.error('❌ Error al enviar correo:', error);
+    }
+
+    return null;
+  });
+
+

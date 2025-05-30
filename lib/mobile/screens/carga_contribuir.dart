@@ -1015,6 +1015,9 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
 
       for (var imagen in List.from(seccion['imagenes'])) {
         File file = File(imagen.path);
+        // 🔍 Obtener ubicación original desde EXIF o ubicación actual
+        Map<String, dynamic> ubicacionImagen =
+            await _obtenerUbicacionDesdeExifOActual(file);
 
         // ✅ Nombre único basado en timestamp
         String fileName = "${DateTime.now().millisecondsSinceEpoch}.jpg";
@@ -1039,8 +1042,9 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
               "tipo": tipo,
               "estado": estado,
               "enfermedad": enfermedad,
-              "latitud": ubicacionGeneral["latitud"],
-              "longitud": ubicacionGeneral["longitud"],
+              "latitud": ubicacionImagen["latitud"],
+              "longitud": ubicacionImagen["longitud"],
+              "fuente_ubicacion": ubicacionImagen["fuente"], // 👈 NUEVO
               "fecha_subida": now.toIso8601String(),
             });
 
@@ -1149,6 +1153,19 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
         );
       },
     );
+
+    //crear la notificacion de envio de contribucion a firestore
+    await FirebaseFirestore.instance
+        .collection('notificaciones')
+        .doc(userId) // ID del usuario
+        .collection('mensajes')
+        .add({
+      'titulo': 'Contribución enviada',
+      'mensaje':
+          'Tu contribución ha sido recibida exitosamente y esta en proceso de revisión. Gracias por contribuir en imagro.',
+      'fecha': Timestamp.now(),
+      'estado': 'nuevo',
+    });
   }
 
   void _actualizarDialogoCarga(int imagenesSubidas, int totalImagenes) {
@@ -1202,5 +1219,110 @@ class _CargaContribuirScreenState extends State<CargaContribuirScreen> {
           ),
         ) ??
         false;
+  }
+
+  //obtener metadatos originales(latitud - longitud) nueva version 2.0
+  Future<Map<String, dynamic>> _obtenerUbicacionDesdeExifOActual(
+      File imagen) async {
+    try {
+      final bytes = await imagen.readAsBytes();
+      final tags = await readExifFromBytes(bytes);
+
+      final latTag = tags['GPS GPSLatitude'];
+      final lonTag = tags['GPS GPSLongitude'];
+      final latRef = tags['GPS GPSLatitudeRef']?.printable ?? 'N';
+      final lonRef = tags['GPS GPSLongitudeRef']?.printable ?? 'E';
+
+      if (latTag != null && lonTag != null) {
+        final latRaw = latTag.values.toList().map((v) => v.toString()).toList();
+        final lonRaw = lonTag.values.toList().map((v) => v.toString()).toList();
+
+        List<double> latitudes = _parsearCoordenadasDesdeString(latRaw);
+        List<double> longitudes = _parsearCoordenadasDesdeString(lonRaw);
+
+        print("🧭 LAT raw: $latRaw → $latitudes");
+        print("🧭 LON raw: $lonRaw → $longitudes");
+
+        if (latitudes.any((v) => v == 0.0) || longitudes.any((v) => v == 0.0)) {
+          throw Exception("EXIF inválido: coordenadas vacías o incorrectas");
+        }
+
+        double latitude = _convertirCoordenadaExif(latitudes, latRef);
+        double longitude = _convertirCoordenadaExif(longitudes, lonRef);
+
+        return {
+          'latitud': latitude,
+          'longitud': longitude,
+          'fuente': 'exif',
+        };
+      }
+    } catch (e) {
+      print('⚠️ Error EXIF, usando GPS actual: $e');
+    }
+
+    // Si falla EXIF o los valores son 0, usar ubicación actual
+    Position pos = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    return {
+      'latitud': pos.latitude,
+      'longitud': pos.longitude,
+      'fuente': 'actual',
+    };
+  }
+
+  //funcion2
+
+  List<double> _convertirIfdValuesAList(IfdValues values) {
+    return values.toList().map<double>((val) {
+      try {
+        // Detectar estructura numérica válida
+        if (val != null &&
+            val.numerator != null &&
+            val.denominator != null &&
+            val.denominator != 0) {
+          final num = val.numerator;
+          final den = val.denominator;
+          final resultado = num / den;
+          if (resultado != 0.0) return resultado;
+        }
+      } catch (e) {
+        print("❌ Error EXIF individual: $e");
+      }
+      return 0.0;
+    }).toList();
+  }
+
+  double _convertirCoordenadaExif(List<double> valores, String ref) {
+    double grados = valores[0];
+    double minutos = valores[1];
+    double segundos = valores[2];
+    double decimal = grados + (minutos / 60) + (segundos / 3600);
+    return (ref == 'S' || ref == 'W') ? -decimal : decimal;
+  }
+
+  //extraer datos desde cualquier marca de dispositivo, incluyendo xiaomi/poco
+  List<double> _parsearCoordenadasDesdeString(List<dynamic> rawValues) {
+    return rawValues.map<double>((val) {
+      try {
+        final stringVal = val.toString().trim();
+        if (stringVal == '0/0') return 0.0;
+
+        if (stringVal.contains('/')) {
+          final partes = stringVal.split('/');
+          if (partes.length == 2) {
+            final num = double.tryParse(partes[0]) ?? 0.0;
+            final den = double.tryParse(partes[1]) ?? 1.0;
+            return den != 0 ? num / den : 0.0;
+          }
+        }
+
+        return double.tryParse(stringVal) ?? 0.0;
+      } catch (e) {
+        print("❌ Error parseando coordenada: $val");
+        return 0.0;
+      }
+    }).toList();
   }
 }
